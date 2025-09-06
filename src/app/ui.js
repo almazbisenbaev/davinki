@@ -10,6 +10,7 @@ export function initUI(state) {
   setupToolbar();
   setupMenu();
   setupLayerControls();
+  setupLayerContextMenu();
   setupBeforeUnload();
   setupCanvasResize();
 }
@@ -287,6 +288,12 @@ function setupLayerControls() {
         render();
       });
       
+      // Context menu
+      div.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showLayerContextMenu(e, layer.id);
+      });
+      
       // Drag and drop events
       div.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', layer.id);
@@ -331,6 +338,87 @@ function setupLayerControls() {
     
    const [movedLayer] = appState.layers.splice(sourceIndex, 1);
     appState.layers.splice(targetIndex, 0, movedLayer);
+    
+    updateLayersPanel();
+    render();
+    appState.markAsModified();
+  }
+}
+
+function showLayerContextMenu(event, layerId) {
+  const contextMenu = document.getElementById('layerContextMenu');
+  const contextRename = document.getElementById('contextRename');
+  const contextDelete = document.getElementById('contextDelete');
+  
+  // Position the context menu
+  contextMenu.style.left = event.pageX + 'px';
+  contextMenu.style.top = event.pageY + 'px';
+  contextMenu.style.display = 'block';
+  
+  // Store the layer ID for the context menu actions
+  contextMenu.dataset.layerId = layerId;
+  
+  // Hide context menu when clicking elsewhere
+  const hideContextMenu = (e) => {
+    if (!contextMenu.contains(e.target)) {
+      contextMenu.style.display = 'none';
+      document.removeEventListener('click', hideContextMenu);
+    }
+  };
+  
+  setTimeout(() => {
+    document.addEventListener('click', hideContextMenu);
+  }, 0);
+}
+
+function setupLayerContextMenu() {
+  const contextRename = document.getElementById('contextRename');
+  const contextDelete = document.getElementById('contextDelete');
+  
+  contextRename.addEventListener('click', () => {
+    const contextMenu = document.getElementById('layerContextMenu');
+    const layerId = contextMenu.dataset.layerId;
+    contextMenu.style.display = 'none';
+    renameLayer(layerId);
+  });
+  
+  contextDelete.addEventListener('click', () => {
+    const contextMenu = document.getElementById('layerContextMenu');
+    const layerId = contextMenu.dataset.layerId;
+    contextMenu.style.display = 'none';
+    deleteLayer(layerId);
+  });
+}
+
+function renameLayer(layerId) {
+  const layer = appState.layers.find(l => l.id === layerId);
+  if (!layer) return;
+  
+  const newName = prompt('Enter new layer name:', layer.name);
+  if (newName && newName.trim()) {
+    layer.name = newName.trim();
+    updateLayersPanel();
+    appState.markAsModified();
+  }
+}
+
+function deleteLayer(layerId) {
+  const layer = appState.layers.find(l => l.id === layerId);
+  if (!layer) return;
+  
+  if (appState.layers.length === 1) {
+    alert('Cannot delete the last layer.');
+    return;
+  }
+  
+  if (confirm(`Delete layer "${layer.name}"?`)) {
+    const layerIndex = appState.layers.findIndex(l => l.id === layerId);
+    appState.layers.splice(layerIndex, 1);
+    
+    // Select another layer if the deleted one was selected
+    if (appState.selectedLayerId === layerId) {
+      appState.selectedLayerId = appState.layers.length > 0 ? appState.layers[0].id : null;
+    }
     
     updateLayersPanel();
     render();
