@@ -64,6 +64,15 @@ body {
   color: white;
   padding: 8px 16px;
   font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.canvas-size {
+  color: #ccc;
+  font-size: 12px;
+  font-family: monospace;
 }
 
 .menu {

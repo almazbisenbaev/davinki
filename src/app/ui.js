@@ -12,6 +12,15 @@ export function initUI(state) {
   setupLayerControls();
 }
 
+function updateCanvasSize() {
+  const canvasSizeElement = document.getElementById('canvasSize');
+  if (appState.canvas && appState.isProjectLoaded) {
+    canvasSizeElement.textContent = `Canvas: ${appState.canvas.width} × ${appState.canvas.height} px`;
+  } else {
+    canvasSizeElement.textContent = 'Canvas: 0 × 0 px';
+  }
+}
+
 function setupWelcomeScreen() {
   const welcomeModal = document.getElementById('welcomeModal');
   const btnNew = document.getElementById('btnNewProject');
@@ -62,6 +71,7 @@ function createNewProject(width = 800, height = 600) {
   appState.addLayer(tempCanvas.toDataURL(), width, height, "Background");
   appState.isProjectLoaded = true;
   updateLayersPanel();
+  updateCanvasSize();
   render();
 }
 
@@ -78,6 +88,7 @@ function createNewProjectFromImage(imageData) {
     appState.addLayer(imageData, img.width, img.height, "Image");
     appState.isProjectLoaded = true;
     updateLayersPanel();
+    updateCanvasSize();
     render();
   };
   img.src = imageData;
