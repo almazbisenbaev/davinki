@@ -109,9 +109,21 @@ function setupMenu() {
   const fileNewProject = document.getElementById('fileNewProject');
   fileNewProject.addEventListener('click', () => {
     if (confirm("Start a new project? Current work will be lost.")) {
+      // Reset app state
       appState.layers = [];
       appState.selectedLayerId = null;
-      createNewProject(800, 800); // default size
+      appState.isProjectLoaded = false;
+      
+      // Show welcome screen
+      document.getElementById('welcomeModal').style.display = 'flex';
+      document.getElementById('app').classList.add('hidden');
+      
+      // Reset canvas size inputs to defaults
+      document.getElementById('canvasWidth').value = 800;
+      document.getElementById('canvasHeight').value = 800;
+      
+      // Update canvas size display
+      updateCanvasSize();
     }
   });
 }
