@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photoshop Lite</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- Welcome Modal -->
+  <div id="welcomeModal" class="modal">
+    <div class="modal-content">
+      <h2>Photoshop Lite</h2>
+      <button id="btnNewProject">Create New Project</button>
+      <button id="btnUploadImage">Upload Image</button>
+    </div>
+  </div>
+
+  <!-- Main UI (hidden until project loaded) -->
+  <div id="app" class="app hidden">
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+      <div class="menu">
+        <span class="menu-title">File</span>
+        <div class="dropdown">
+          <div id="fileNewProject" class="dropdown-item">New Project</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="tool active" data-tool="move">↖️</div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <!-- Canvas Container (for relative positioning) -->
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <!-- Layers Panel -->
+      <div class="layers-panel">
+        <div class="panel-header">
+          <span>Layers</span>
+          <button id="btnAddLayer" class="btn-add">+</button>
+          <button id="btnAddImageLayer" class="btn-add">🖼️</button>
+        </div>
+        <div id="layersList" class="layers-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
