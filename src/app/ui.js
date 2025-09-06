@@ -27,7 +27,9 @@ function setupWelcomeScreen() {
   const btnUpload = document.getElementById('btnUploadImage');
 
   btnNew.addEventListener('click', () => {
-    createNewProject();
+    const width = parseInt(document.getElementById('canvasWidth').value) || 800;
+    const height = parseInt(document.getElementById('canvasHeight').value) || 800;
+    createNewProject(width, height);
     welcomeModal.style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
   });
@@ -52,7 +54,7 @@ function setupWelcomeScreen() {
   });
 }
 
-function createNewProject(width = 800, height = 600) {
+function createNewProject(width = 800, height = 800) {
   // Initialize canvas first
   initCanvas(appState);
   
@@ -109,7 +111,7 @@ function setupMenu() {
     if (confirm("Start a new project? Current work will be lost.")) {
       appState.layers = [];
       appState.selectedLayerId = null;
-      createNewProject(800, 600); // default size
+      createNewProject(800, 800); // default size
     }
   });
 }
