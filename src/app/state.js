@@ -5,6 +5,7 @@ let nextLayerId = 1;
 export function initAppState() {
   return {
     isProjectLoaded: false,
+    hasUnsavedChanges: false,
     canvas: null,
     ctx: null,
     layers: [],
@@ -17,6 +18,14 @@ export function initAppState() {
     // helpers
     getSelectedLayer() {
       return this.layers.find(l => l.id === this.selectedLayerId);
+    },
+
+    markAsModified() {
+      this.hasUnsavedChanges = true;
+    },
+
+    markAsSaved() {
+      this.hasUnsavedChanges = false;
     },
 
     addLayer(imageData = null, width = null, height = null, name = "Layer") {
@@ -72,6 +81,7 @@ export function initAppState() {
 
       this.layers.unshift(layer);
       this.selectedLayerId = layer.id;
+      this.markAsModified();
       return layer;
     }
   };

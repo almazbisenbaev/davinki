@@ -10,6 +10,17 @@ export function initUI(state) {
   setupToolbar();
   setupMenu();
   setupLayerControls();
+  setupBeforeUnload();
+}
+
+function setupBeforeUnload() {
+  window.addEventListener('beforeunload', (e) => {
+    if (appState.hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      return 'You have unsaved changes. Are you sure you want to leave?';
+    }
+  });
 }
 
 function updateCanvasSize() {
@@ -72,6 +83,7 @@ function createNewProject(width = 800, height = 800) {
 
   appState.addLayer(tempCanvas.toDataURL(), width, height, "Background");
   appState.isProjectLoaded = true;
+  appState.markAsSaved(); // New project starts as saved
   updateLayersPanel();
   updateCanvasSize();
   // render() will be called automatically when the layer image loads
@@ -89,6 +101,7 @@ function createNewProjectFromImage(imageData) {
 
     appState.addLayer(imageData, img.width, img.height, "Image");
     appState.isProjectLoaded = true;
+    appState.markAsSaved(); // New project starts as saved
     updateLayersPanel();
     updateCanvasSize();
     // render() will be called automatically when the layer image loads
@@ -108,11 +121,19 @@ function setupToolbar() {
 function setupMenu() {
   const fileNewProject = document.getElementById('fileNewProject');
   fileNewProject.addEventListener('click', () => {
-    if (confirm("Start a new project? Current work will be lost.")) {
+    let shouldProceed = true;
+    if (appState.hasUnsavedChanges) {
+      shouldProceed = confirm("You have unsaved changes. Start a new project? Current work will be lost.");
+    } else if (appState.isProjectLoaded) {
+      shouldProceed = confirm("Start a new project? Current work will be lost.");
+    }
+    
+    if (shouldProceed) {
       // Reset app state
       appState.layers = [];
       appState.selectedLayerId = null;
       appState.isProjectLoaded = false;
+      appState.hasUnsavedChanges = false;
       
       // Show welcome screen
       document.getElementById('welcomeModal').style.display = 'flex';
