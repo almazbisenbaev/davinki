@@ -126,6 +126,81 @@ function setupMenu() {
       updateCanvasSize();
     }
   });
+
+  const fileExport = document.getElementById('fileExport');
+  fileExport.addEventListener('click', () => {
+    if (!appState.isProjectLoaded || !appState.canvas) {
+      alert('Please create a project first.');
+      return;
+    }
+    showExportDialog();
+  });
+
+  setupExportDialog();
+}
+
+function showExportDialog() {
+  document.getElementById('exportModal').style.display = 'flex';
+}
+
+function setupExportDialog() {
+  const exportModal = document.getElementById('exportModal');
+  const btnExportCancel = document.getElementById('btnExportCancel');
+  const btnExportConfirm = document.getElementById('btnExportConfirm');
+  const qualitySlider = document.getElementById('exportQuality');
+  const qualityValue = document.getElementById('qualityValue');
+
+  // Update quality display
+  qualitySlider.addEventListener('input', () => {
+    qualityValue.textContent = Math.round(qualitySlider.value * 100) + '%';
+  });
+
+  // Cancel export
+  btnExportCancel.addEventListener('click', () => {
+    exportModal.style.display = 'none';
+  });
+
+  // Confirm export
+  btnExportConfirm.addEventListener('click', () => {
+    exportImage();
+    exportModal.style.display = 'none';
+  });
+}
+
+function exportImage() {
+  const format = document.querySelector('input[name="exportFormat"]:checked').value;
+  const quality = parseFloat(document.getElementById('exportQuality').value);
+  
+  // Create a temporary canvas to render all layers
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = appState.canvas.width;
+  exportCanvas.height = appState.canvas.height;
+  const exportCtx = exportCanvas.getContext('2d');
+  
+  // Clear the canvas
+  exportCtx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
+  
+  // Draw each visible layer (reverse order so first layers are on top)
+  appState.layers.slice().reverse().forEach(layer => {
+    if (!layer.visible || !layer.isLoaded || !layer.image) return;
+    exportCtx.drawImage(layer.image, layer.x, layer.y);
+  });
+  
+  // Convert to blob and download
+  exportCanvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // Set filename based on format
+    const extension = format.split('/')[1];
+    a.download = `export.${extension === 'jpeg' ? 'jpg' : extension}`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, format, format === 'image/jpeg' || format === 'image/webp' ? quality : undefined);
 }
 
 function setupLayerControls() {

@@ -23,6 +23,30 @@
     </div>
   </div>
 
+  <!-- Export Modal -->
+  <div id="exportModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Export Image</h2>
+      <div class="export-options">
+        <label>Format:</label>
+        <div class="format-options">
+          <label><input type="radio" name="exportFormat" value="image/jpeg" checked> JPG</label>
+          <label><input type="radio" name="exportFormat" value="image/png"> PNG</label>
+          <label><input type="radio" name="exportFormat" value="image/webp"> WEBP</label>
+        </div>
+        <div class="quality-option">
+          <label for="exportQuality">Quality (JPG/WEBP):</label>
+          <input type="range" id="exportQuality" min="0.1" max="1" step="0.1" value="0.9">
+          <span id="qualityValue">90%</span>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="btnExportCancel">Cancel</button>
+        <button id="btnExportConfirm">Export</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main UI (hidden until project loaded) -->
   <div id="app" class="app hidden">
     <!-- Menu Bar -->
@@ -31,6 +55,7 @@
         <span class="menu-title">File</span>
         <div class="dropdown">
           <div id="fileNewProject" class="dropdown-item">New Project</div>
+          <div id="fileExport" class="dropdown-item">Export</div>
         </div>
       </div>
       <div id="canvasSize" class="canvas-size">Canvas: 0 × 0 px</div>

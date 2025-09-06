@@ -73,6 +73,52 @@ body {
   font-size: 14px;
 }
 
+/* Export Modal */
+.export-options {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.export-options label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.format-options {
+  display: flex;
+  gap: 15px;
+  margin: 10px 0;
+}
+
+.format-options label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quality-option {
+  margin: 15px 0;
+}
+
+.quality-option input[type="range"] {
+  width: 150px;
+  margin: 0 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  width: 100px;
+  margin: 0;
+}
+
 /* App UI */
 .app {
   display: flex;
