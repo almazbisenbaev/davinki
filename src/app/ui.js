@@ -11,6 +11,7 @@ export function initUI(state) {
   setupMenu();
   setupLayerControls();
   setupBeforeUnload();
+  setupCanvasResize();
 }
 
 function setupBeforeUnload() {
@@ -27,8 +28,12 @@ function updateCanvasSize() {
   const canvasSizeElement = document.getElementById('canvasSize');
   if (appState.canvas && appState.isProjectLoaded) {
     canvasSizeElement.textContent = `Canvas: ${appState.canvas.width} × ${appState.canvas.height} px`;
+    canvasSizeElement.style.cursor = 'pointer';
+    canvasSizeElement.title = 'Click to resize canvas';
   } else {
     canvasSizeElement.textContent = 'Canvas: 0 × 0 px';
+    canvasSizeElement.style.cursor = 'default';
+    canvasSizeElement.title = '';
   }
 }
 
@@ -324,10 +329,80 @@ function setupLayerControls() {
     const sourceIndex = appState.layers.findIndex(l => l.id === layerId);
     if (sourceIndex === -1 || sourceIndex === targetIndex) return;
     
-    const [movedLayer] = appState.layers.splice(sourceIndex, 1);
+   const [movedLayer] = appState.layers.splice(sourceIndex, 1);
     appState.layers.splice(targetIndex, 0, movedLayer);
     
     updateLayersPanel();
     render();
+    appState.markAsModified();
   }
+}
+
+function setupCanvasResize() {
+  const canvasSizeElement = document.getElementById('canvasSize');
+  const modal = document.getElementById('canvasResizeModal');
+  const newWidthInput = document.getElementById('newCanvasWidth');
+  const newHeightInput = document.getElementById('newCanvasHeight');
+  const centerLayersCheckbox = document.getElementById('centerLayers');
+  const cancelBtn = document.getElementById('btnResizeCancel');
+  const confirmBtn = document.getElementById('btnResizeConfirm');
+
+  // Show modal when canvas size is clicked
+  canvasSizeElement.addEventListener('click', () => {
+    if (appState.canvas && appState.isProjectLoaded) {
+      newWidthInput.value = appState.canvas.width;
+      newHeightInput.value = appState.canvas.height;
+      modal.style.display = 'flex';
+    }
+  });
+
+  // Cancel button
+  cancelBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  // Confirm resize
+  confirmBtn.addEventListener('click', () => {
+    const newWidth = parseInt(newWidthInput.value);
+    const newHeight = parseInt(newHeightInput.value);
+    const centerLayers = centerLayersCheckbox.checked;
+    
+    if (newWidth > 0 && newHeight > 0) {
+      resizeCanvas(newWidth, newHeight, centerLayers);
+      modal.style.display = 'none';
+    }
+  });
+
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+}
+
+function resizeCanvas(newWidth, newHeight, centerLayers) {
+  const oldWidth = appState.canvas.width;
+  const oldHeight = appState.canvas.height;
+  
+  // Resize the canvas
+  appState.canvas.width = newWidth;
+  appState.canvas.height = newHeight;
+  
+  // Calculate offset for centering layers
+  const offsetX = centerLayers ? (newWidth - oldWidth) / 2 : 0;
+  const offsetY = centerLayers ? (newHeight - oldHeight) / 2 : 0;
+  
+  // Update layer positions if centering
+  if (centerLayers && (offsetX !== 0 || offsetY !== 0)) {
+    appState.layers.forEach(layer => {
+      if (layer.x !== undefined) layer.x += offsetX;
+      if (layer.y !== undefined) layer.y += offsetY;
+    });
+  }
+  
+  // Update UI and re-render
+  updateCanvasSize();
+  render();
+  appState.markAsModified();
 }

@@ -119,6 +119,24 @@ body {
   margin: 0;
 }
 
+/* Canvas Resize Modal */
+.resize-options {
+  margin: 15px 0;
+  text-align: left;
+}
+
+.resize-options label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.resize-options input[type="checkbox"] {
+  margin: 0;
+}
+
 /* App UI */
 .app {
   display: flex;
