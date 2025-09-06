@@ -61,7 +61,10 @@ function setupWelcomeScreen() {
 
       const reader = new FileReader();
       reader.onload = event => {
-        createNewProjectFromImage(event.target.result);
+        // Extract filename without extension for layer name
+        const fileName = file.name.replace(/\.[^/.]+$/, "");
+        const layerName = fileName || "Image";
+        createNewProjectFromImage(event.target.result, layerName);
         welcomeModal.style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
       };
@@ -95,7 +98,7 @@ function createNewProject(width = 800, height = 800) {
   // render() will be called automatically when the layer image loads
 }
 
-function createNewProjectFromImage(imageData) {
+function createNewProjectFromImage(imageData, layerName = "Image") {
   const img = new Image();
   img.onload = () => {
     // Initialize canvas first
@@ -105,7 +108,7 @@ function createNewProjectFromImage(imageData) {
     canvas.width = img.width;
     canvas.height = img.height;
 
-    appState.addLayer(imageData, img.width, img.height, "Image");
+    appState.addLayer(imageData, img.width, img.height, layerName);
     appState.isProjectLoaded = true;
     appState.markAsSaved(); // New project starts as saved
     updateLayersPanel();
@@ -258,7 +261,10 @@ function setupLayerControls() {
           alert('Please create a new project first.');
           return;
         }
-        appState.addLayer(event.target.result, null, null, "Image Layer");
+        // Extract filename without extension for layer name
+        const fileName = file.name.replace(/\.[^/.]+$/, "");
+        const layerName = fileName || "Image Layer";
+        appState.addLayer(event.target.result, null, null, layerName);
         updateLayersPanel();
         // render() will be called automatically when the layer image loads
       };
