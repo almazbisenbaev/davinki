@@ -1,3 +1,5 @@
+import { render } from './canvas.js';
+
 let nextLayerId = 1;
 
 export function initAppState() {

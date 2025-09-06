@@ -74,7 +74,7 @@ function createNewProject(width = 800, height = 800) {
   appState.isProjectLoaded = true;
   updateLayersPanel();
   updateCanvasSize();
-  render();
+  // render() will be called automatically when the layer image loads
 }
 
 function createNewProjectFromImage(imageData) {
@@ -91,7 +91,7 @@ function createNewProjectFromImage(imageData) {
     appState.isProjectLoaded = true;
     updateLayersPanel();
     updateCanvasSize();
-    render();
+    // render() will be called automatically when the layer image loads
   };
   img.src = imageData;
 }
@@ -140,7 +140,7 @@ function setupLayerControls() {
     }
     appState.addLayer(null, appState.canvas.width, appState.canvas.height, "Layer");
     updateLayersPanel();
-    render();
+    // render() will be called automatically when the layer image loads
   });
 
   btnAddImageLayer.addEventListener('click', () => {
@@ -158,7 +158,7 @@ function setupLayerControls() {
         }
         appState.addLayer(event.target.result, null, null, "Image Layer");
         updateLayersPanel();
-        render();
+        // render() will be called automatically when the layer image loads
       };
       reader.readAsDataURL(file);
     };
