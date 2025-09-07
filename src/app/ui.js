@@ -204,11 +204,15 @@ function setupUndoRedo() {
   
   if (undoBtn) {
     undoBtn.addEventListener('click', () => {
-      if (appState.undo()) {
+      const undoResult = appState.undo();
+      if (undoResult) {
         updateUndoRedoButtons();
         // Update UI panels after undo
         if (window.updateLayersPanel) window.updateLayersPanel();
         if (window.updatePropertiesPanel) window.updatePropertiesPanel();
+        
+        // Show brief feedback about what was undone
+        showUndoFeedback(undoResult.undoneOperation);
       }
     });
   }
@@ -225,8 +229,52 @@ function updateUndoRedoButtons() {
   const undoBtn = document.getElementById('btnUndo');
   
   if (undoBtn) {
-    undoBtn.disabled = !appState.canUndo();
+    const canUndo = appState.canUndo();
+    undoBtn.disabled = !canUndo;
+    
+    // Update tooltip to show what operation can be undone
+    if (canUndo && appState.lastOperation) {
+      undoBtn.title = `Undo: ${appState.lastOperation}`;
+    } else {
+      undoBtn.title = 'Undo';
+    }
   }
+}
+
+/**
+ * Show brief visual feedback about what operation was undone
+ * @param {string} operation - The operation that was undone
+ */
+function showUndoFeedback(operation) {
+  // Create or reuse feedback element
+  let feedback = document.getElementById('undo-feedback');
+  if (!feedback) {
+    feedback = document.createElement('div');
+    feedback.id = 'undo-feedback';
+    feedback.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    `;
+    document.body.appendChild(feedback);
+  }
+  
+  feedback.textContent = `Undone: ${operation}`;
+  feedback.style.opacity = '1';
+  
+  // Hide after 2 seconds
+  setTimeout(() => {
+    feedback.style.opacity = '0';
+  }, 2000);
 }
 
 // Export functions to window for global access
@@ -452,7 +500,7 @@ function setupLayerControls() {
     if (sourceIndex === -1 || sourceIndex === targetIndex) return;
     
     // Save state before moving layer for undo functionality
-    appState.saveStateToHistory();
+    appState.saveStateToHistory('Reorder layer');
     
     const [movedLayer] = appState.layers.splice(sourceIndex, 1);
     appState.layers.splice(targetIndex, 0, movedLayer);
@@ -516,7 +564,7 @@ function renameLayer(layerId) {
   const newName = prompt('Enter new layer name:', layer.name);
   if (newName && newName.trim()) {
     // Save state before renaming layer for undo functionality
-    appState.saveStateToHistory();
+    appState.saveStateToHistory('Rename layer');
     
     layer.name = newName.trim();
     updateLayersPanel();
@@ -536,7 +584,7 @@ function deleteLayer(layerId) {
   
   if (confirm(`Delete layer "${layer.name}"?`)) {
     // Save state before deleting layer for undo functionality
-    appState.saveStateToHistory();
+    appState.saveStateToHistory('Delete layer');
     
     const layerIndex = appState.layers.findIndex(l => l.id === layerId);
     appState.layers.splice(layerIndex, 1);
@@ -608,7 +656,7 @@ function setupCanvasResize() {
 
 function resizeCanvas(newWidth, newHeight, anchor) {
   // Save state before resizing for undo functionality
-  appState.saveStateToHistory();
+  appState.saveStateToHistory('Resize canvas');
   
   const oldWidth = appState.canvas.width;
   const oldHeight = appState.canvas.height;

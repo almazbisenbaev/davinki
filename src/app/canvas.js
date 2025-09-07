@@ -117,7 +117,7 @@ function onMouseDown(e) {
     mouseY <= selectedLayer.y + selectedLayer.height
   ) {
     // Save state before starting drag operation for undo functionality
-    appState.saveStateToHistory();
+    appState.saveStateToHistory('Move layer');
     
     // Initialize drag operation with current mouse position and layer offset
     appState.isDragging = true;
@@ -429,7 +429,7 @@ function createTextInput(textLayer) {
   // Finish editing on Enter key or when input loses focus
   const finishEditing = () => {
     // Save state after text editing for undo functionality
-    appState.saveStateToHistory();
+    appState.saveStateToHistory('Edit text');
     
     textLayer.isEditing = false;
     input.remove();

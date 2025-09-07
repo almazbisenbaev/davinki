@@ -33,7 +33,8 @@ export function initAppState() {
     // Undo/Redo system
     history: [], // Array of state snapshots for undo functionality
     historyIndex: -1, // Current position in history array
-    maxHistorySize: 50, // Maximum number of undo states to keep
+    maxHistorySize: 3, // Maximum number of undo states to keep
+    lastOperation: null, // Description of the last operation for better UX
 
     // Helper methods for state management
     
@@ -127,7 +128,7 @@ export function initAppState() {
       };
 
       // Save state before adding layer for undo functionality
-      this.saveStateToHistory();
+      this.saveStateToHistory('Add layer');
       
       // Add to beginning of layers array (top of z-order)
       this.layers.unshift(layer);
@@ -148,7 +149,7 @@ export function initAppState() {
      */
     addTextLayer(text = "Sample text", x = 100, y = 100, fontSize = 24, color = "#000000") {
       // Save state before adding text layer for undo functionality
-      this.saveStateToHistory();
+      this.saveStateToHistory('Add text layer');
       
       const layer = {
         id: `layer-${nextLayerId++}`, // Unique identifier using global counter
@@ -177,8 +178,9 @@ export function initAppState() {
     /**
      * Save current state to history for undo functionality
      * Creates a deep copy of layers, selected layer state, and canvas dimensions
+     * @param {string} operation - Description of the operation being performed
      */
-    saveStateToHistory() {
+    saveStateToHistory(operation = 'Unknown operation') {
       // Remove any future history if we're not at the end
       if (this.historyIndex < this.history.length - 1) {
         this.history = this.history.slice(0, this.historyIndex + 1);
@@ -192,11 +194,14 @@ export function initAppState() {
         })))),
         selectedLayerId: this.selectedLayerId,
         canvasWidth: this.canvas ? this.canvas.width : 800,
-        canvasHeight: this.canvas ? this.canvas.height : 800
+        canvasHeight: this.canvas ? this.canvas.height : 800,
+        operation: operation,
+        timestamp: Date.now()
       };
 
       this.history.push(stateSnapshot);
       this.historyIndex = this.history.length - 1;
+      this.lastOperation = operation;
 
       // Limit history size
       if (this.history.length > this.maxHistorySize) {
@@ -207,15 +212,25 @@ export function initAppState() {
 
     /**
      * Undo the last action by restoring previous state
-     * @returns {boolean} True if undo was performed, false if no history available
+     * @returns {Object|null} Object with undo info if performed, null if no history available
      */
     undo() {
       if (this.historyIndex > 0) {
+        const currentSnapshot = this.history[this.historyIndex];
         this.historyIndex--;
         this.restoreStateFromHistory();
-        return true;
+        
+        // Update last operation to reflect what we're now at
+        const newSnapshot = this.history[this.historyIndex];
+        this.lastOperation = newSnapshot ? newSnapshot.operation : null;
+        
+        return {
+          undoneOperation: currentSnapshot.operation,
+          currentOperation: this.lastOperation,
+          timestamp: currentSnapshot.timestamp
+        };
       }
-      return false;
+      return null;
     },
 
     /**
