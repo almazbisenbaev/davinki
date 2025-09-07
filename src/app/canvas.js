@@ -42,17 +42,9 @@ export function render() {
       layer.width = textMetrics.width;
       layer.height = layer.fontSize * 1.2; // Add line height spacing
       
-      ctx.fillText(layer.text, layer.x, layer.y);
-      
-      // Show text cursor if currently editing this layer
-      if (layer.isEditing) {
-        const cursorX = layer.x + textMetrics.width;
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cursorX, layer.y);
-        ctx.lineTo(cursorX, layer.y + layer.height);
-        ctx.stroke();
+      // Only render canvas text when not editing - during editing, show HTML input instead
+      if (!layer.isEditing) {
+        ctx.fillText(layer.text, layer.x, layer.y);
       }
     } else if (layer.image) {
       // Image layer rendering - draw at layer position with original dimensions
@@ -413,7 +405,7 @@ function createTextInput(textLayer) {
   input.style.color = textLayer.color;
   input.style.background = 'transparent';
   input.style.border = 'none';
-  input.style.outline = 'none';
+  input.style.outline = 'none'
   input.style.zIndex = '1000'; // Ensure input appears above canvas
 
   document.body.appendChild(input);
