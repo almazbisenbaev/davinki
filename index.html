@@ -130,6 +130,11 @@
           <path d="M7.92098 2.29927C6.93571 1.53286 5.5 2.23498 5.5 3.48325V20.492C5.5 21.9142 7.2945 22.538 8.17661 21.4224L12.3676 16.1222C12.6806 15.7264 13.1574 15.4956 13.6619 15.4956H20.5143C21.9425 15.4956 22.5626 13.6885 21.4353 12.8116L7.92098 2.29927Z" fill="#212121"/>
         </svg>
       </div>
+      <div class="tool" data-tool="crop">
+        <svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 2C6.55228 2 7 2.44772 7 3V6H17C18.1046 6 19 6.89543 19 8V18H22C22.5523 18 23 18.4477 23 19C23 19.5523 22.5523 20 22 20H19V21C19 21.5523 18.5523 22 18 22C17.4477 22 17 21.5523 17 21V20H8C6.89543 20 6 19.1046 6 18V7H3C2.44772 7 2 6.55228 2 6C2 5.44772 2.44772 5 3 5H6V3C6 2.44772 6.44772 2 7 2H6ZM8 8V18H17V8H8Z" fill="#212121"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Workspace -->
@@ -137,6 +142,27 @@
       <!-- Canvas Container (for relative positioning) -->
       <div class="canvas-container">
         <canvas id="canvas"></canvas>
+        
+        <!-- Crop Overlay -->
+        <div id="cropOverlay" class="crop-overlay" style="display: none;">
+          <div class="crop-area">
+            <!-- Resize handles -->
+            <div class="crop-handle crop-handle-nw" data-direction="nw"></div>
+            <div class="crop-handle crop-handle-n" data-direction="n"></div>
+            <div class="crop-handle crop-handle-ne" data-direction="ne"></div>
+            <div class="crop-handle crop-handle-w" data-direction="w"></div>
+            <div class="crop-handle crop-handle-e" data-direction="e"></div>
+            <div class="crop-handle crop-handle-sw" data-direction="sw"></div>
+            <div class="crop-handle crop-handle-s" data-direction="s"></div>
+            <div class="crop-handle crop-handle-se" data-direction="se"></div>
+          </div>
+          
+          <!-- Crop Controls -->
+          <div class="crop-controls">
+            <button id="btnCropConfirm" class="crop-btn crop-btn-confirm">✓ Crop</button>
+            <button id="btnCropCancel" class="crop-btn crop-btn-cancel">✕ Cancel</button>
+          </div>
+        </div>
       </div>
 
       <!-- Layers Panel -->

@@ -13,4 +13,9 @@ export function setActiveTool(toolName) {
   document.querySelectorAll('.tool').forEach(el => {
     el.classList.toggle('active', el.dataset.tool === toolName);
   });
+
+  // Dispatch tool change event for other components to listen
+  document.dispatchEvent(new CustomEvent('toolChanged', {
+    detail: { tool: toolName }
+  }));
 }
