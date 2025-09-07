@@ -83,6 +83,30 @@ export function initAppState() {
       this.selectedLayerId = layer.id;
       this.markAsModified();
       return layer;
+    },
+
+    addTextLayer(text = "Sample text", x = 100, y = 100, fontSize = 24, color = "#000000") {
+      const layer = {
+        id: `layer-${nextLayerId++}`,
+        name: `Text ${nextLayerId - 1}`,
+        type: 'text',
+        x,
+        y,
+        width: 200, // Initial width, will be calculated based on text
+        height: fontSize * 1.2, // Initial height based on font size
+        visible: true,
+        text,
+        fontSize,
+        color,
+        fontFamily: 'Arial',
+        isLoaded: true,
+        isEditing: false
+      };
+
+      this.layers.unshift(layer);
+      this.selectedLayerId = layer.id;
+      this.markAsModified();
+      return layer;
     }
   };
 }

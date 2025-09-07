@@ -130,6 +130,13 @@
           <path d="M7.92098 2.29927C6.93571 1.53286 5.5 2.23498 5.5 3.48325V20.492C5.5 21.9142 7.2945 22.538 8.17661 21.4224L12.3676 16.1222C12.6806 15.7264 13.1574 15.4956 13.6619 15.4956H20.5143C21.9425 15.4956 22.5626 13.6885 21.4353 12.8116L7.92098 2.29927Z" fill="#212121"/>
         </svg>
       </div>
+      <div class="tool" data-tool="text">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4,7 4,4 20,4 20,7"></polyline>
+          <line x1="9" y1="20" x2="15" y2="20"></line>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
+        </svg>
+      </div>
       <div class="tool" data-tool="crop">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-crop">
           <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -175,6 +182,16 @@
           <button id="btnAddImageLayer" class="btn-add">🖼️</button>
         </div>
         <div id="layersList" class="layers-list"></div>
+        
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+          <div class="panel-header">
+            <span>Properties</span>
+          </div>
+          <div id="propertiesContent" class="properties-content">
+            <div class="no-selection">Select a tool or layer to see properties</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { initCanvas, render } from './canvas.js';
+import { initCanvas, render, setUICallbacks } from './canvas.js';
 import { initTools, setActiveTool } from './tools.js';
 
 let appState;
@@ -14,6 +14,10 @@ export function initUI(state) {
   setupBeforeUnload();
   setupCanvasResize();
   setupCropTool();
+  setupPropertiesPanel();
+  
+  // Set up canvas callbacks
+  setUICallbacks(window.updateLayersPanel, window.updatePropertiesPanel);
 }
 
 function setupBeforeUnload() {
@@ -292,6 +296,7 @@ function setupLayerControls() {
       div.addEventListener('click', () => {
         appState.selectedLayerId = layer.id;
         updateLayersPanel();
+        updatePropertiesPanel();
         render();
       });
       
@@ -738,5 +743,57 @@ function setupCropTool() {
     } else {
       hideCropOverlay();
     }
+    updatePropertiesPanel();
   });
+}
+
+function setupPropertiesPanel() {
+  // Update properties panel UI
+  window.updatePropertiesPanel = () => {
+    const propertiesContent = document.getElementById('propertiesContent');
+    const selectedLayer = appState.getSelectedLayer();
+    
+    if (appState.activeTool === 'text' || (selectedLayer && selectedLayer.type === 'text')) {
+      // Show text properties
+      const textLayer = selectedLayer && selectedLayer.type === 'text' ? selectedLayer : null;
+      propertiesContent.innerHTML = `
+        <div class="property-group">
+          <label>Font Size:</label>
+          <input type="range" id="fontSizeSlider" min="8" max="72" value="${textLayer ? textLayer.fontSize : 24}">
+          <span id="fontSizeValue">${textLayer ? textLayer.fontSize : 24}px</span>
+        </div>
+        <div class="property-group">
+          <label>Text Color:</label>
+          <input type="color" id="textColorPicker" value="${textLayer ? textLayer.color : '#000000'}">
+        </div>
+      `;
+      
+      // Add event listeners
+      const fontSizeSlider = document.getElementById('fontSizeSlider');
+      const fontSizeValue = document.getElementById('fontSizeValue');
+      const textColorPicker = document.getElementById('textColorPicker');
+      
+      fontSizeSlider.addEventListener('input', () => {
+        const newSize = parseInt(fontSizeSlider.value);
+        fontSizeValue.textContent = newSize + 'px';
+        if (textLayer) {
+          textLayer.fontSize = newSize;
+          render();
+        }
+      });
+      
+      textColorPicker.addEventListener('input', () => {
+        if (textLayer) {
+          textLayer.color = textColorPicker.value;
+          render();
+        }
+      });
+    } else {
+      // Show default message
+      propertiesContent.innerHTML = '<div class="no-selection">Select a tool or layer to see properties</div>';
+    }
+  };
+  
+  // Initial update
+  updatePropertiesPanel();
 }
