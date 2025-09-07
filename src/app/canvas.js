@@ -56,6 +56,11 @@ export function render() {
       ctx.strokeRect(layer.x, layer.y, layer.width, layer.height);
     }
   });
+
+  // Draw snap guides if dragging
+  if (appState.isDragging && appState.snapGuides) {
+    drawSnapGuides();
+  }
 }
 
 function attachCanvasEvents() {
@@ -110,14 +115,163 @@ function onMouseMove(e) {
   const selectedLayer = appState.getSelectedLayer();
   if (!selectedLayer) return;
 
-  selectedLayer.x = mouseX - appState.dragLayerOffset.x;
-  selectedLayer.y = mouseY - appState.dragLayerOffset.y;
+  // Calculate new position
+  let newX = mouseX - appState.dragLayerOffset.x;
+  let newY = mouseY - appState.dragLayerOffset.y;
+
+  // Apply snapping
+  const snappedPosition = getSnappedPosition(newX, newY, selectedLayer);
+  selectedLayer.x = snappedPosition.x;
+  selectedLayer.y = snappedPosition.y;
 
   render();
 }
 
+// Snapping configuration
+const SNAP_THRESHOLD = 10; // pixels
+
+function getSnappedPosition(x, y, currentLayer) {
+  let snappedX = x;
+  let snappedY = y;
+  let snapGuides = { vertical: [], horizontal: [] };
+  
+  const canvas = appState.canvas;
+  const otherLayers = appState.layers.filter(layer => 
+    layer.id !== currentLayer.id && layer.visible && layer.isLoaded
+  );
+  
+  // Canvas snap points
+  const canvasSnapPoints = {
+    x: [
+      0, // left edge
+      canvas.width / 2 - currentLayer.width / 2, // center
+      canvas.width - currentLayer.width // right edge
+    ],
+    y: [
+      0, // top edge
+      canvas.height / 2 - currentLayer.height / 2, // center
+      canvas.height - currentLayer.height // bottom edge
+    ]
+  };
+  
+  // Check canvas snapping
+  for (const snapX of canvasSnapPoints.x) {
+    if (Math.abs(x - snapX) <= SNAP_THRESHOLD) {
+      snappedX = snapX;
+      // Add vertical guide line
+      if (snapX === 0) {
+        snapGuides.vertical.push({ x: 0, type: 'canvas-left' });
+      } else if (snapX === canvas.width / 2 - currentLayer.width / 2) {
+        snapGuides.vertical.push({ x: canvas.width / 2, type: 'canvas-center' });
+      } else {
+        snapGuides.vertical.push({ x: canvas.width, type: 'canvas-right' });
+      }
+      break;
+    }
+  }
+  
+  for (const snapY of canvasSnapPoints.y) {
+    if (Math.abs(y - snapY) <= SNAP_THRESHOLD) {
+      snappedY = snapY;
+      // Add horizontal guide line
+      if (snapY === 0) {
+        snapGuides.horizontal.push({ y: 0, type: 'canvas-top' });
+      } else if (snapY === canvas.height / 2 - currentLayer.height / 2) {
+        snapGuides.horizontal.push({ y: canvas.height / 2, type: 'canvas-center' });
+      } else {
+        snapGuides.horizontal.push({ y: canvas.height, type: 'canvas-bottom' });
+      }
+      break;
+    }
+  }
+  
+  // Check snapping to other layers
+  for (const layer of otherLayers) {
+    // Layer snap points for X axis
+    const layerSnapPointsX = [
+      layer.x, // left edge
+      layer.x + layer.width / 2 - currentLayer.width / 2, // center align
+      layer.x + layer.width - currentLayer.width // right edge
+    ];
+    
+    // Layer snap points for Y axis
+    const layerSnapPointsY = [
+      layer.y, // top edge
+      layer.y + layer.height / 2 - currentLayer.height / 2, // center align
+      layer.y + layer.height - currentLayer.height // bottom edge
+    ];
+    
+    // Check X snapping
+    for (let i = 0; i < layerSnapPointsX.length; i++) {
+      const snapX = layerSnapPointsX[i];
+      if (Math.abs(x - snapX) <= SNAP_THRESHOLD) {
+        snappedX = snapX;
+        // Add vertical guide line
+        if (i === 0) {
+          snapGuides.vertical.push({ x: layer.x, type: 'layer-left' });
+        } else if (i === 1) {
+          snapGuides.vertical.push({ x: layer.x + layer.width / 2, type: 'layer-center' });
+        } else {
+          snapGuides.vertical.push({ x: layer.x + layer.width, type: 'layer-right' });
+        }
+        break;
+      }
+    }
+    
+    // Check Y snapping
+    for (let i = 0; i < layerSnapPointsY.length; i++) {
+      const snapY = layerSnapPointsY[i];
+      if (Math.abs(y - snapY) <= SNAP_THRESHOLD) {
+        snappedY = snapY;
+        // Add horizontal guide line
+        if (i === 0) {
+          snapGuides.horizontal.push({ y: layer.y, type: 'layer-top' });
+        } else if (i === 1) {
+          snapGuides.horizontal.push({ y: layer.y + layer.height / 2, type: 'layer-center' });
+        } else {
+          snapGuides.horizontal.push({ y: layer.y + layer.height, type: 'layer-bottom' });
+        }
+        break;
+      }
+    }
+  }
+  
+  // Store snap guides in app state
+  appState.snapGuides = snapGuides;
+  
+  return { x: snappedX, y: snappedY };
+}
+
+function drawSnapGuides() {
+  const { ctx, canvas, snapGuides } = appState;
+  
+  ctx.save();
+  ctx.strokeStyle = '#ff0080';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  
+  // Draw vertical guides
+  snapGuides.vertical.forEach(guide => {
+    ctx.beginPath();
+    ctx.moveTo(guide.x, 0);
+    ctx.lineTo(guide.x, canvas.height);
+    ctx.stroke();
+  });
+  
+  // Draw horizontal guides
+  snapGuides.horizontal.forEach(guide => {
+    ctx.beginPath();
+    ctx.moveTo(0, guide.y);
+    ctx.lineTo(canvas.width, guide.y);
+    ctx.stroke();
+  });
+  
+  ctx.restore();
+}
+
 function onMouseUp() {
   appState.isDragging = false;
+  appState.snapGuides = null;
   appState.canvas.style.cursor = 'default';
 }
 
