@@ -437,9 +437,20 @@ function setupCanvasResize() {
   const modal = document.getElementById('canvasResizeModal');
   const newWidthInput = document.getElementById('newCanvasWidth');
   const newHeightInput = document.getElementById('newCanvasHeight');
-  const centerLayersCheckbox = document.getElementById('centerLayers');
   const cancelBtn = document.getElementById('btnResizeCancel');
   const confirmBtn = document.getElementById('btnResizeConfirm');
+  const anchorPoints = document.querySelectorAll('.anchor-point');
+
+  let selectedAnchor = 'middle-center';
+
+  // Setup anchor point selection
+  anchorPoints.forEach(point => {
+    point.addEventListener('click', () => {
+      anchorPoints.forEach(p => p.classList.remove('active'));
+      point.classList.add('active');
+      selectedAnchor = point.dataset.anchor;
+    });
+  });
 
   // Show modal when canvas size is clicked
   canvasSizeElement.addEventListener('click', () => {
@@ -459,10 +470,9 @@ function setupCanvasResize() {
   confirmBtn.addEventListener('click', () => {
     const newWidth = parseInt(newWidthInput.value);
     const newHeight = parseInt(newHeightInput.value);
-    const centerLayers = centerLayersCheckbox.checked;
     
     if (newWidth > 0 && newHeight > 0) {
-      resizeCanvas(newWidth, newHeight, centerLayers);
+      resizeCanvas(newWidth, newHeight, selectedAnchor);
       modal.style.display = 'none';
     }
   });
@@ -475,7 +485,7 @@ function setupCanvasResize() {
   });
 }
 
-function resizeCanvas(newWidth, newHeight, centerLayers) {
+function resizeCanvas(newWidth, newHeight, anchor) {
   const oldWidth = appState.canvas.width;
   const oldHeight = appState.canvas.height;
   
@@ -483,12 +493,33 @@ function resizeCanvas(newWidth, newHeight, centerLayers) {
   appState.canvas.width = newWidth;
   appState.canvas.height = newHeight;
   
-  // Calculate offset for centering layers
-  const offsetX = centerLayers ? (newWidth - oldWidth) / 2 : 0;
-  const offsetY = centerLayers ? (newHeight - oldHeight) / 2 : 0;
+  // Calculate offset based on anchor point
+  let offsetX = 0;
+  let offsetY = 0;
   
-  // Update layer positions if centering
-  if (centerLayers && (offsetX !== 0 || offsetY !== 0)) {
+  const widthDiff = newWidth - oldWidth;
+  const heightDiff = newHeight - oldHeight;
+  
+  // Calculate X offset based on anchor horizontal position
+  if (anchor.includes('left')) {
+    offsetX = 0; // No offset - expand/crop from right
+  } else if (anchor.includes('center')) {
+    offsetX = widthDiff / 2; // Center - expand/crop equally from both sides
+  } else if (anchor.includes('right')) {
+    offsetX = widthDiff; // Full offset - expand/crop from left
+  }
+  
+  // Calculate Y offset based on anchor vertical position
+  if (anchor.includes('top')) {
+    offsetY = 0; // No offset - expand/crop from bottom
+  } else if (anchor.includes('middle')) {
+    offsetY = heightDiff / 2; // Center - expand/crop equally from both sides
+  } else if (anchor.includes('bottom')) {
+    offsetY = heightDiff; // Full offset - expand/crop from top
+  }
+  
+  // Update layer positions based on calculated offsets
+  if (offsetX !== 0 || offsetY !== 0) {
     appState.layers.forEach(layer => {
       if (layer.x !== undefined) layer.x += offsetX;
       if (layer.y !== undefined) layer.y += offsetY;

@@ -59,10 +59,20 @@
         </div>
       </div>
       <div class="resize-options">
-        <label>
-          <input type="checkbox" id="centerLayers" checked>
-          Center existing layers in new canvas
-        </label>
+        <label>Anchor Point:</label>
+        <div class="anchor-selector">
+          <div class="anchor-grid">
+            <div class="anchor-point" data-anchor="top-left"></div>
+            <div class="anchor-point" data-anchor="top-center"></div>
+            <div class="anchor-point" data-anchor="top-right"></div>
+            <div class="anchor-point" data-anchor="middle-left"></div>
+            <div class="anchor-point active" data-anchor="middle-center"></div>
+            <div class="anchor-point" data-anchor="middle-right"></div>
+            <div class="anchor-point" data-anchor="bottom-left"></div>
+            <div class="anchor-point" data-anchor="bottom-center"></div>
+            <div class="anchor-point" data-anchor="bottom-right"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-buttons">
         <button id="btnResizeCancel">Cancel</button>
