@@ -291,6 +291,7 @@ body {
   overflow: auto;
   padding: 200px;
   box-sizing: border-box;
+  position: relative; /* Enable absolute positioning for crop overlay */
 }
 
 #canvas {
@@ -458,7 +459,7 @@ body {
 
 /* Crop Tool Styles */
 .crop-overlay {
-  position: fixed;
+  position: absolute;
   pointer-events: none;
   z-index: 10;
 }

@@ -722,14 +722,17 @@ function setupCropTool() {
   function showCropOverlay() {
     if (!appState.canvas || !appState.isProjectLoaded) return;
     
-    const canvasRect = appState.canvas.getBoundingClientRect();
+    const canvas = appState.canvas;
+    const canvasContainer = canvas.parentElement;
     
-    // Position overlay to match canvas position using fixed positioning
-    cropOverlay.style.position = 'fixed';
-    cropOverlay.style.left = canvasRect.left + 'px';
-    cropOverlay.style.top = canvasRect.top + 'px';
-    cropOverlay.style.width = canvasRect.width + 'px';
-    cropOverlay.style.height = canvasRect.height + 'px';
+    // Position overlay to match canvas position within the container
+    const canvasOffsetLeft = canvas.offsetLeft;
+    const canvasOffsetTop = canvas.offsetTop;
+    
+    cropOverlay.style.left = canvasOffsetLeft + 'px';
+    cropOverlay.style.top = canvasOffsetTop + 'px';
+    cropOverlay.style.width = canvas.offsetWidth + 'px';
+    cropOverlay.style.height = canvas.offsetHeight + 'px';
     
     // Initialize crop area to match canvas size
     cropRect = {
@@ -750,9 +753,9 @@ function setupCropTool() {
 
   // Update crop area visual position and size
   function updateCropArea() {
-    const canvasRect = appState.canvas.getBoundingClientRect();
-    const scaleX = canvasRect.width / appState.canvas.width;
-    const scaleY = canvasRect.height / appState.canvas.height;
+    const canvas = appState.canvas;
+    const scaleX = canvas.offsetWidth / canvas.width;
+    const scaleY = canvas.offsetHeight / canvas.height;
     
     cropArea.style.left = (cropRect.x * scaleX) + 'px';
     cropArea.style.top = (cropRect.y * scaleY) + 'px';
@@ -765,13 +768,18 @@ function setupCropTool() {
     e.preventDefault();
     isDragging = true;
     
-    const canvasRect = appState.canvas.getBoundingClientRect();
-    const scaleX = appState.canvas.width / canvasRect.width;
-    const scaleY = appState.canvas.height / canvasRect.height;
+    const canvas = appState.canvas;
+    const canvasContainer = canvas.parentElement;
+    const containerRect = canvasContainer.getBoundingClientRect();
+    const canvasOffsetLeft = canvas.offsetLeft;
+    const canvasOffsetTop = canvas.offsetTop;
+    
+    const scaleX = canvas.width / canvas.offsetWidth;
+    const scaleY = canvas.height / canvas.offsetHeight;
     
     dragStart = {
-      x: (e.clientX - canvasRect.left) * scaleX,
-      y: (e.clientY - canvasRect.top) * scaleY
+      x: (e.clientX - containerRect.left - canvasOffsetLeft) * scaleX,
+      y: (e.clientY - containerRect.top - canvasOffsetTop) * scaleY
     };
     
     initialRect = { ...cropRect };
@@ -790,13 +798,18 @@ function setupCropTool() {
   function onMouseMove(e) {
     if (!isDragging) return;
     
-    const canvasRect = appState.canvas.getBoundingClientRect();
-    const scaleX = appState.canvas.width / canvasRect.width;
-    const scaleY = appState.canvas.height / canvasRect.height;
+    const canvas = appState.canvas;
+    const canvasContainer = canvas.parentElement;
+    const containerRect = canvasContainer.getBoundingClientRect();
+    const canvasOffsetLeft = canvas.offsetLeft;
+    const canvasOffsetTop = canvas.offsetTop;
+    
+    const scaleX = canvas.width / canvas.offsetWidth;
+    const scaleY = canvas.height / canvas.offsetHeight;
     
     const currentMouse = {
-      x: (e.clientX - canvasRect.left) * scaleX,
-      y: (e.clientY - canvasRect.top) * scaleY
+      x: (e.clientX - containerRect.left - canvasOffsetLeft) * scaleX,
+      y: (e.clientY - containerRect.top - canvasOffsetTop) * scaleY
     };
     
     const deltaX = currentMouse.x - dragStart.x;
