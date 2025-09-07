@@ -1,126 +1,186 @@
 import { initCanvas, render, setUICallbacks } from './canvas.js';
 import { initTools, setActiveTool } from './tools.js';
 
+// Global reference to application state
 let appState;
 
+/**
+ * Initialize the entire UI system and connect all components
+ * This is the main entry point for setting up the user interface
+ * @param {Object} state - The application state object
+ */
 export function initUI(state) {
   appState = state;
-  initTools(state);
-  setupWelcomeScreen();
-  setupToolbar();
-  setupMenu();
-  setupLayerControls();
-  setupLayerContextMenu();
-  setupBeforeUnload();
-  setupCanvasResize();
-  setupCropTool();
-  setupPropertiesPanel();
   
-  // Set up canvas callbacks
+  // Initialize all UI subsystems in proper order
+  initTools(state); // Set up tool system
+  setupWelcomeScreen(); // Project creation/loading interface
+  setupToolbar(); // Tool selection buttons
+  setupMenu(); // File menu and export functionality
+  setupLayerControls(); // Layer management panel
+  setupLayerContextMenu(); // Right-click layer operations
+  setupBeforeUnload(); // Prevent accidental data loss
+  setupCanvasResize(); // Canvas size management
+  setupCropTool(); // Image cropping functionality
+  setupPropertiesPanel(); // Layer property editing
+  
+  // Connect canvas operations to UI updates
   setUICallbacks(window.updateLayersPanel, window.updatePropertiesPanel);
 }
 
+/**
+ * Set up browser beforeunload protection to prevent accidental data loss
+ * Shows warning dialog when user tries to leave with unsaved changes
+ */
 function setupBeforeUnload() {
   window.addEventListener('beforeunload', (e) => {
     if (appState.hasUnsavedChanges) {
-      e.preventDefault();
+      e.preventDefault(); // Required for modern browsers
       e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-      return 'You have unsaved changes. Are you sure you want to leave?';
+      return 'You have unsaved changes. Are you sure you want to leave?'; // Legacy browser support
     }
   });
 }
 
+/**
+ * Update the canvas size display in the UI
+ * Shows current canvas dimensions and enables resize functionality when project is loaded
+ */
 function updateCanvasSize() {
   const canvasSizeElement = document.getElementById('canvasSize');
   if (appState.canvas && appState.isProjectLoaded) {
+    // Show actual canvas dimensions with interactive resize option
     canvasSizeElement.textContent = `Canvas: ${appState.canvas.width} × ${appState.canvas.height} px`;
     canvasSizeElement.style.cursor = 'pointer';
     canvasSizeElement.title = 'Click to resize canvas';
   } else {
+    // Show placeholder when no project is loaded
     canvasSizeElement.textContent = 'Canvas: 0 × 0 px';
     canvasSizeElement.style.cursor = 'default';
     canvasSizeElement.title = '';
   }
 }
 
+/**
+ * Set up the welcome screen with project creation options
+ * Handles both blank canvas creation and image upload workflows
+ */
 function setupWelcomeScreen() {
   const welcomeModal = document.getElementById('welcomeModal');
   const btnNew = document.getElementById('btnNewProject');
   const btnUpload = document.getElementById('btnUploadImage');
 
+  // Handle new blank project creation
   btnNew.addEventListener('click', () => {
+    // Get canvas dimensions from user input with fallback defaults
     const width = parseInt(document.getElementById('canvasWidth').value) || 800;
     const height = parseInt(document.getElementById('canvasHeight').value) || 800;
+    
     createNewProject(width, height);
+    
+    // Hide welcome screen and show main application
     welcomeModal.style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
   });
 
+  // Handle project creation from uploaded image
   btnUpload.addEventListener('click', () => {
+    // Create invisible file input for image selection
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/*'; // Only allow image files
+    
     input.onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
 
+      // Read the selected image file
       const reader = new FileReader();
       reader.onload = event => {
-        // Extract filename without extension for layer name
+        // Extract filename without extension for meaningful layer name
         const fileName = file.name.replace(/\.[^/.]+$/, "");
         const layerName = fileName || "Image";
+        
         createNewProjectFromImage(event.target.result, layerName);
+        
+        // Hide welcome screen and show main application
         welcomeModal.style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file); // Convert to base64 for canvas use
     };
-    input.click();
+    
+    input.click(); // Trigger file selection dialog
   });
 }
 
+/**
+ * Create a new blank project with specified dimensions
+ * Sets up canvas, adds white background layer, and initializes project state
+ * @param {number} width - Canvas width in pixels
+ * @param {number} height - Canvas height in pixels
+ */
 function createNewProject(width = 800, height = 800) {
-  // Initialize canvas first
+  // Initialize the canvas system with current app state
   initCanvas(appState);
   
   const { canvas } = appState;
   canvas.width = width;
   canvas.height = height;
 
-  // Add white background layer
+  // Create a white background layer for the new project
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = width;
   tempCanvas.height = height;
   const tempCtx = tempCanvas.getContext('2d');
-  tempCtx.fillStyle = '#ffffff';
+  tempCtx.fillStyle = '#ffffff'; // White background
   tempCtx.fillRect(0, 0, width, height);
 
+  // Add the background as the first layer
   appState.addLayer(tempCanvas.toDataURL(), width, height, "Background");
+  
+  // Set project state
   appState.isProjectLoaded = true;
-  appState.markAsSaved(); // New project starts as saved
+  appState.markAsSaved(); // New project starts as saved (no changes yet)
+  
+  // Update UI to reflect new project
   updateLayersPanel();
   updateCanvasSize();
   // render() will be called automatically when the layer image loads
 }
 
+/**
+ * Create a new project from an uploaded image
+ * Canvas dimensions are set to match the image size
+ * @param {string} imageData - Base64 encoded image data
+ * @param {string} layerName - Name for the image layer
+ */
 function createNewProjectFromImage(imageData, layerName = "Image") {
   const img = new Image();
+  
   img.onload = () => {
-    // Initialize canvas first
+    // Initialize the canvas system with current app state
     initCanvas(appState);
     
+    // Set canvas size to match the uploaded image
     const { canvas } = appState;
     canvas.width = img.width;
     canvas.height = img.height;
 
+    // Add the uploaded image as the first layer
     appState.addLayer(imageData, img.width, img.height, layerName);
+    
+    // Set project state
     appState.isProjectLoaded = true;
-    appState.markAsSaved(); // New project starts as saved
+    appState.markAsSaved(); // New project starts as saved (no changes yet)
+    
+    // Update UI to reflect new project
     updateLayersPanel();
     updateCanvasSize();
     // render() will be called automatically when the layer image loads
   };
-  img.src = imageData;
+  
+  img.src = imageData; // Trigger image loading
 }
 
 function setupToolbar() {
