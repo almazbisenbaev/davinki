@@ -11,23 +11,36 @@
   <div id="welcomeModal" class="modal">
     <div class="modal-content">
 
-      <h2>DaVinki</h2>
-      <p>Online image editor</p>
+      <div class="welcome-header">
+        <h2>DaVinki. <span>Online image editor</span></h2>
+      </div>
 
-      <div class="canvas-size-inputs">
-        <label>Canvas Size:</label>
-        <div class="size-inputs">
-          <input type="number" id="canvasWidth" value="800" min="1" max="4000"> ×
-          <input type="number" id="canvasHeight" value="800" min="1" max="4000"> px
+      <div class="canvas-size">
+
+        <div class="canvas-size-title">Canvas Size:</div>
+
+        <div class="canvas-size-inputs">
+          <div class="size-inputs">
+            <div>
+              <div>Width:</div>
+              <input type="number" id="canvasWidth" value="800" min="1" max="4000"> px
+            </div>
+            <div>
+              <div>Height:</div>
+              <input type="number" id="canvasHeight" value="800" min="1" max="4000"> px
+            </div>
+          </div>
         </div>
+
       </div>
 
-      <div>
-        <button id="btnNewProject">Create New Project</button>
-        <button id="btnUploadImage">Upload Image</button>
+      <div class="canvas-size-buttons">
+        <button class="ui-btn" id="btnNewProject">Create New Project</button>
+        <div>or</div>
+        <button class="ui-btn" id="btnUploadImage">Upload Image</button>
       </div>
 
-      <div>Author: <a href="https://helloalmaz.com" target="_blank">@almazbisenbaev</a></div>
+      <div class="welcome-footer">Author: <a href="https://helloalmaz.com" target="_blank">@almazbisenbaev</a></div>
 
     </div>
   </div>
