@@ -190,7 +190,48 @@ function setupToolbar() {
       setActiveTool(tool);
     });
   });
+  
+  // Setup undo/redo buttons
+  setupUndoRedo();
 }
+
+/**
+ * Setup undo button functionality
+ * Handles button clicks and manages button enabled/disabled states
+ */
+function setupUndoRedo() {
+  const undoBtn = document.getElementById('btnUndo');
+  
+  if (undoBtn) {
+    undoBtn.addEventListener('click', () => {
+      if (appState.undo()) {
+        updateUndoRedoButtons();
+        // Update UI panels after undo
+        if (window.updateLayersPanel) window.updateLayersPanel();
+        if (window.updatePropertiesPanel) window.updatePropertiesPanel();
+      }
+    });
+  }
+  
+  // Initial button state update
+  updateUndoRedoButtons();
+}
+
+/**
+ * Update the enabled/disabled state of undo button
+ * Called after any action that might change history state
+ */
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('btnUndo');
+  
+  if (undoBtn) {
+    undoBtn.disabled = !appState.canUndo();
+  }
+}
+
+// Export functions to window for global access
+window.updateUndoRedoButtons = updateUndoRedoButtons;
+window.updateCanvasSize = updateCanvasSize;
 
 function setupMenu() {
   const fileNewProject = document.getElementById('fileNewProject');
@@ -310,6 +351,7 @@ function setupLayerControls() {
     }
     appState.addLayer(null, appState.canvas.width, appState.canvas.height, "Layer");
     updateLayersPanel();
+    window.updateUndoRedoButtons();
     // render() will be called automatically when the layer image loads
   });
 
@@ -331,6 +373,7 @@ function setupLayerControls() {
         const layerName = fileName || "Image Layer";
         appState.addLayer(event.target.result, null, null, layerName);
         updateLayersPanel();
+        window.updateUndoRedoButtons();
         // render() will be called automatically when the layer image loads
       };
       reader.readAsDataURL(file);
@@ -408,12 +451,16 @@ function setupLayerControls() {
     const sourceIndex = appState.layers.findIndex(l => l.id === layerId);
     if (sourceIndex === -1 || sourceIndex === targetIndex) return;
     
-   const [movedLayer] = appState.layers.splice(sourceIndex, 1);
+    // Save state before moving layer for undo functionality
+    appState.saveStateToHistory();
+    
+    const [movedLayer] = appState.layers.splice(sourceIndex, 1);
     appState.layers.splice(targetIndex, 0, movedLayer);
     
     updateLayersPanel();
     render();
     appState.markAsModified();
+    window.updateUndoRedoButtons();
   }
 }
 
@@ -468,9 +515,13 @@ function renameLayer(layerId) {
   
   const newName = prompt('Enter new layer name:', layer.name);
   if (newName && newName.trim()) {
+    // Save state before renaming layer for undo functionality
+    appState.saveStateToHistory();
+    
     layer.name = newName.trim();
     updateLayersPanel();
     appState.markAsModified();
+    window.updateUndoRedoButtons();
   }
 }
 
@@ -484,6 +535,9 @@ function deleteLayer(layerId) {
   }
   
   if (confirm(`Delete layer "${layer.name}"?`)) {
+    // Save state before deleting layer for undo functionality
+    appState.saveStateToHistory();
+    
     const layerIndex = appState.layers.findIndex(l => l.id === layerId);
     appState.layers.splice(layerIndex, 1);
     
@@ -495,6 +549,7 @@ function deleteLayer(layerId) {
     updateLayersPanel();
     render();
     appState.markAsModified();
+    window.updateUndoRedoButtons();
   }
 }
 
@@ -552,6 +607,9 @@ function setupCanvasResize() {
 }
 
 function resizeCanvas(newWidth, newHeight, anchor) {
+  // Save state before resizing for undo functionality
+  appState.saveStateToHistory();
+  
   const oldWidth = appState.canvas.width;
   const oldHeight = appState.canvas.height;
   
@@ -596,6 +654,7 @@ function resizeCanvas(newWidth, newHeight, anchor) {
   updateCanvasSize();
   render();
   appState.markAsModified();
+  if (window.updateUndoRedoButtons) window.updateUndoRedoButtons();
 }
 
 function setupCropTool() {

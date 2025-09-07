@@ -116,6 +116,9 @@ function onMouseDown(e) {
     mouseY >= selectedLayer.y &&
     mouseY <= selectedLayer.y + selectedLayer.height
   ) {
+    // Save state before starting drag operation for undo functionality
+    appState.saveStateToHistory();
+    
     // Initialize drag operation with current mouse position and layer offset
     appState.isDragging = true;
     appState.dragStart = { x: mouseX, y: mouseY };
@@ -310,6 +313,12 @@ function drawSnapGuides() {
  * Handle mouse up events - ends drag operations and cleans up UI state
  */
 function onMouseUp() {
+  // If we were dragging, save the final state for undo functionality
+  if (appState.isDragging) {
+    appState.markAsModified();
+    if (window.updateUndoRedoButtons) window.updateUndoRedoButtons();
+  }
+  
   appState.isDragging = false;
   appState.snapGuides = null; // Clear snap guides
   appState.canvas.style.cursor = 'default'; // Reset cursor
@@ -419,10 +428,14 @@ function createTextInput(textLayer) {
 
   // Finish editing on Enter key or when input loses focus
   const finishEditing = () => {
+    // Save state after text editing for undo functionality
+    appState.saveStateToHistory();
+    
     textLayer.isEditing = false;
     input.remove();
     render();
     updatePropertiesPanel();
+    if (window.updateUndoRedoButtons) window.updateUndoRedoButtons();
   };
 
   input.addEventListener('keydown', (e) => {

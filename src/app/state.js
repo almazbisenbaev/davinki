@@ -30,6 +30,11 @@ export function initAppState() {
     dragStart: { x: 0, y: 0 }, // Initial mouse position when drag started
     dragLayerOffset: { x: 0, y: 0 }, // Offset from layer origin to mouse position
 
+    // Undo/Redo system
+    history: [], // Array of state snapshots for undo functionality
+    historyIndex: -1, // Current position in history array
+    maxHistorySize: 50, // Maximum number of undo states to keep
+
     // Helper methods for state management
     
     /**
@@ -121,6 +126,9 @@ export function initAppState() {
         layer.isLoaded = true; // Allow layer to be processed even if image failed
       };
 
+      // Save state before adding layer for undo functionality
+      this.saveStateToHistory();
+      
       // Add to beginning of layers array (top of z-order)
       this.layers.unshift(layer);
       this.selectedLayerId = layer.id; // Auto-select new layer
@@ -139,6 +147,9 @@ export function initAppState() {
      * @returns {Object} The created text layer object
      */
     addTextLayer(text = "Sample text", x = 100, y = 100, fontSize = 24, color = "#000000") {
+      // Save state before adding text layer for undo functionality
+      this.saveStateToHistory();
+      
       const layer = {
         id: `layer-${nextLayerId++}`, // Unique identifier using global counter
         name: `Text ${nextLayerId - 1}`, // Human-readable name with number
@@ -161,6 +172,125 @@ export function initAppState() {
       this.selectedLayerId = layer.id; // Auto-select new layer
       this.markAsModified(); // Track changes for save system
       return layer;
+    },
+
+    /**
+     * Save current state to history for undo functionality
+     * Creates a deep copy of layers, selected layer state, and canvas dimensions
+     */
+    saveStateToHistory() {
+      // Remove any future history if we're not at the end
+      if (this.historyIndex < this.history.length - 1) {
+        this.history = this.history.slice(0, this.historyIndex + 1);
+      }
+
+      // Create deep copy of current state including canvas dimensions
+      const stateSnapshot = {
+        layers: JSON.parse(JSON.stringify(this.layers.map(layer => ({
+          ...layer,
+          image: layer.image ? layer.image.src : null // Store image src instead of Image object
+        })))),
+        selectedLayerId: this.selectedLayerId,
+        canvasWidth: this.canvas ? this.canvas.width : 800,
+        canvasHeight: this.canvas ? this.canvas.height : 800
+      };
+
+      this.history.push(stateSnapshot);
+      this.historyIndex = this.history.length - 1;
+
+      // Limit history size
+      if (this.history.length > this.maxHistorySize) {
+        this.history.shift();
+        this.historyIndex--;
+      }
+    },
+
+    /**
+     * Undo the last action by restoring previous state
+     * @returns {boolean} True if undo was performed, false if no history available
+     */
+    undo() {
+      if (this.historyIndex > 0) {
+        this.historyIndex--;
+        this.restoreStateFromHistory();
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * Redo the next action by restoring forward state
+     * @returns {boolean} True if redo was performed, false if no future history available
+     */
+    redo() {
+      if (this.historyIndex < this.history.length - 1) {
+        this.historyIndex++;
+        this.restoreStateFromHistory();
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * Restore state from history at current index
+     * Recreates Image objects, restores canvas dimensions, and triggers re-render
+     */
+    restoreStateFromHistory() {
+      if (this.historyIndex >= 0 && this.historyIndex < this.history.length) {
+        const snapshot = this.history[this.historyIndex];
+        
+        // Restore canvas dimensions if they exist in the snapshot
+        if (this.canvas && snapshot.canvasWidth && snapshot.canvasHeight) {
+          this.canvas.width = snapshot.canvasWidth;
+          this.canvas.height = snapshot.canvasHeight;
+        }
+        
+        // Restore layers with Image objects
+        this.layers = snapshot.layers.map(layerData => {
+          const layer = { ...layerData };
+          
+          if (layerData.image && layerData.type !== 'text') {
+            // Recreate Image object for image layers
+            const img = new Image();
+            img.src = layerData.image;
+            layer.image = img;
+            layer.isLoaded = false;
+            
+            img.onload = () => {
+              layer.isLoaded = true;
+              render();
+            };
+          } else {
+            // Text layers don't need image recreation
+            layer.isLoaded = true;
+          }
+          
+          return layer;
+        });
+        
+        this.selectedLayerId = snapshot.selectedLayerId;
+        this.markAsModified();
+        
+        // Update canvas size display and re-render
+        if (window.updateCanvasSize) window.updateCanvasSize();
+        render();
+      }
+    },
+
+    /**
+     * Check if undo is available
+     * @returns {boolean} True if undo is possible
+     */
+    canUndo() {
+      return this.historyIndex > 0;
+    },
+
+    /**
+     * Check if redo is available
+     * @returns {boolean} True if redo is possible
+     */
+    canRedo() {
+      return this.historyIndex < this.history.length - 1;
     }
   };
 }
