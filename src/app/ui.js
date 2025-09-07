@@ -551,11 +551,11 @@ function setupCropTool() {
     if (!appState.canvas || !appState.isProjectLoaded) return;
     
     const canvasRect = appState.canvas.getBoundingClientRect();
-    const containerRect = appState.canvas.parentElement.getBoundingClientRect();
     
-    // Position overlay to match canvas position
-    cropOverlay.style.left = (canvasRect.left - containerRect.left) + 'px';
-    cropOverlay.style.top = (canvasRect.top - containerRect.top) + 'px';
+    // Position overlay to match canvas position using fixed positioning
+    cropOverlay.style.position = 'fixed';
+    cropOverlay.style.left = canvasRect.left + 'px';
+    cropOverlay.style.top = canvasRect.top + 'px';
     cropOverlay.style.width = canvasRect.width + 'px';
     cropOverlay.style.height = canvasRect.height + 'px';
     
