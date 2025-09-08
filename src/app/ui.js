@@ -705,33 +705,35 @@ function resizeCanvas(newWidth, newHeight, anchor) {
   if (window.updateUndoRedoButtons) window.updateUndoRedoButtons();
 }
 
+// Global crop tool variables and constants
+let cropOverlay, cropArea;
+let cropRect = { x: 0, y: 0, width: 0, height: 0 };
+let isDragging = false;
+let dragType = null; // 'move' or handle direction
+let dragStart = { x: 0, y: 0 };
+let initialRect = { x: 0, y: 0, width: 0, height: 0 };
+let aspectRatio = 'free'; // Current aspect ratio mode
+let snapGuides = { vertical: [], horizontal: [] };
+let isAltPressed = false;
+
+// Snapping configuration
+const SNAP_THRESHOLD = 10; // pixels
+
+// Aspect ratio presets
+const ASPECT_RATIOS = {
+  'free': null,
+  '1:1': 1,
+  '4:3': 4/3,
+  '16:9': 16/9,
+  '3:2': 3/2
+};
+
 function setupCropTool() {
-  const cropOverlay = document.getElementById('cropOverlay');
-  const cropArea = cropOverlay.querySelector('.crop-area');
+  cropOverlay = document.getElementById('cropOverlay');
+  cropArea = cropOverlay.querySelector('.crop-area');
   const cropHandles = cropOverlay.querySelectorAll('.crop-handle');
   const confirmBtn = document.getElementById('btnCropConfirm');
   const cancelBtn = document.getElementById('btnCropCancel');
-  
-  let cropRect = { x: 0, y: 0, width: 0, height: 0 };
-  let isDragging = false;
-  let dragType = null; // 'move' or handle direction
-  let dragStart = { x: 0, y: 0 };
-  let initialRect = { x: 0, y: 0, width: 0, height: 0 };
-  let aspectRatio = 'free'; // Current aspect ratio mode
-  let snapGuides = { vertical: [], horizontal: [] };
-  let isAltPressed = false;
-  
-  // Snapping configuration
-  const SNAP_THRESHOLD = 10; // pixels
-  
-  // Aspect ratio presets
-  const ASPECT_RATIOS = {
-    'free': null,
-    '1:1': 1,
-    '4:3': 4/3,
-    '16:9': 16/9,
-    '3:2': 3/2
-  };
 
   // Show crop overlay when crop tool is activated
   function showCropOverlay() {
@@ -822,82 +824,106 @@ function setupCropTool() {
   }
   
   // Apply aspect ratio constraint to dimensions
-  function applyAspectRatio(width, height, ratioKey) {
-    if (ratioKey === 'free' || !ASPECT_RATIOS[ratioKey]) {
-      return { width, height };
-    }
-    
-    const ratio = ASPECT_RATIOS[ratioKey];
-    const currentRatio = width / height;
-    
-    if (currentRatio > ratio) {
-      // Width is too large, adjust it
-      width = height * ratio;
-    } else {
-      // Height is too large, adjust it
-      height = width / ratio;
-    }
-    
+// Apply aspect ratio constraints to dimensions
+function applyAspectRatio(width, height, ratioKey) {
+  if (ratioKey === 'free' || !ASPECT_RATIOS[ratioKey]) {
     return { width, height };
   }
   
-  // Update crop area visual position and size
-  function updateCropArea() {
-    const canvas = appState.canvas;
-    const scaleX = canvas.offsetWidth / canvas.width;
-    const scaleY = canvas.offsetHeight / canvas.height;
-    
-    cropArea.style.left = (cropRect.x * scaleX) + 'px';
-    cropArea.style.top = (cropRect.y * scaleY) + 'px';
-    cropArea.style.width = (cropRect.width * scaleX) + 'px';
-    cropArea.style.height = (cropRect.height * scaleY) + 'px';
-    
-    // Draw snap guides
-    drawCropSnapGuides();
+  const ratio = ASPECT_RATIOS[ratioKey];
+  const currentRatio = width / height;
+  
+  if (currentRatio > ratio) {
+    // Width is too large, adjust it
+    width = height * ratio;
+  } else {
+    // Height is too large, adjust it
+    height = width / ratio;
   }
   
-  // Draw snap guides for crop tool
-  function drawCropSnapGuides() {
-    // Remove existing guides
-    const existingGuides = cropOverlay.querySelectorAll('.snap-guide');
-    existingGuides.forEach(guide => guide.remove());
+  return { width, height };
+}
+
+// Update crop area visual position and size
+function updateCropArea() {
+  if (!cropArea || !appState.canvas) return;
+  
+  const canvas = appState.canvas;
+  const scaleX = canvas.offsetWidth / canvas.width;
+  const scaleY = canvas.offsetHeight / canvas.height;
+  
+  cropArea.style.left = (cropRect.x * scaleX) + 'px';
+  cropArea.style.top = (cropRect.y * scaleY) + 'px';
+  cropArea.style.width = (cropRect.width * scaleX) + 'px';
+  cropArea.style.height = (cropRect.height * scaleY) + 'px';
+  
+  // Draw snap guides if any
+  drawCropSnapGuides();
+}
+
+// Draw snap guides for crop tool
+function drawCropSnapGuides() {
+  if (!cropOverlay) return;
+  
+  // Remove existing guides
+  const existingGuides = cropOverlay.querySelectorAll('.snap-guide');
+  existingGuides.forEach(guide => guide.remove());
+  
+  if (!isDragging) return;
+  
+  const canvas = appState.canvas;
+  const scaleX = canvas.offsetWidth / canvas.width;
+  const scaleY = canvas.offsetHeight / canvas.height;
+  
+  // Draw vertical guides
+  snapGuides.vertical.forEach(guide => {
+    const line = document.createElement('div');
+    line.className = 'snap-guide snap-guide-vertical';
+    line.style.position = 'absolute';
+    line.style.left = (guide.x * scaleX) + 'px';
+    line.style.top = '0px';
+    line.style.width = '1px';
+    line.style.height = '100%';
+    line.style.background = '#007acc';
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '15';
+    cropOverlay.appendChild(line);
+  });
+  
+  // Draw horizontal guides
+  snapGuides.horizontal.forEach(guide => {
+    const line = document.createElement('div');
+    line.className = 'snap-guide snap-guide-horizontal';
+    line.style.position = 'absolute';
+    line.style.left = '0px';
+    line.style.top = (guide.y * scaleY) + 'px';
+    line.style.width = '100%';
+    line.style.height = '1px';
+    line.style.background = '#007acc';
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '15';
+    cropOverlay.appendChild(line);
+  });
+}
+
+// Expose aspect ratio setter globally for properties panel
+window.setCropAspectRatio = (newAspectRatio) => {
+  aspectRatio = newAspectRatio;
+  // If not free aspect ratio, apply constraint to current crop rect
+  if (aspectRatio !== 'free' && appState.canvas && cropRect.width > 0 && cropRect.height > 0) {
+    const constrainedDimensions = applyAspectRatio(cropRect.width, cropRect.height, aspectRatio);
+    cropRect.width = constrainedDimensions.width;
+    cropRect.height = constrainedDimensions.height;
     
-    if (!isDragging) return;
-    
+    // Ensure crop area stays within canvas bounds
     const canvas = appState.canvas;
-    const scaleX = canvas.offsetWidth / canvas.width;
-    const scaleY = canvas.offsetHeight / canvas.height;
+    cropRect.x = Math.max(0, Math.min(canvas.width - cropRect.width, cropRect.x));
+    cropRect.y = Math.max(0, Math.min(canvas.height - cropRect.height, cropRect.y));
     
-    // Draw vertical guides
-    snapGuides.vertical.forEach(guide => {
-      const line = document.createElement('div');
-      line.className = 'snap-guide snap-guide-vertical';
-      line.style.position = 'absolute';
-      line.style.left = (guide.x * scaleX) + 'px';
-      line.style.top = '0px';
-      line.style.width = '1px';
-      line.style.height = '100%';
-      line.style.background = '#007acc';
-      line.style.pointerEvents = 'none';
-      line.style.zIndex = '15';
-      cropOverlay.appendChild(line);
-    });
-    
-    // Draw horizontal guides
-    snapGuides.horizontal.forEach(guide => {
-      const line = document.createElement('div');
-      line.className = 'snap-guide snap-guide-horizontal';
-      line.style.position = 'absolute';
-      line.style.left = '0px';
-      line.style.top = (guide.y * scaleY) + 'px';
-      line.style.width = '100%';
-      line.style.height = '1px';
-      line.style.background = '#007acc';
-      line.style.pointerEvents = 'none';
-      line.style.zIndex = '15';
-      cropOverlay.appendChild(line);
-    });
+    updateCropArea();
   }
+};
+
 
   // Handle keyboard events for alt/option key
   function onKeyDown(e) {
@@ -1139,23 +1165,7 @@ function setupCropTool() {
   confirmBtn.addEventListener('click', confirmCrop);
   cancelBtn.addEventListener('click', cancelCrop);
 
-  // Expose aspect ratio setter globally for properties panel
-  window.setCropAspectRatio = (newAspectRatio) => {
-    aspectRatio = newAspectRatio;
-    // If not free aspect ratio, apply constraint to current crop rect
-    if (aspectRatio !== 'free' && appState.canvas) {
-      const constrainedDimensions = applyAspectRatio(cropRect.width, cropRect.height, aspectRatio);
-      cropRect.width = constrainedDimensions.width;
-      cropRect.height = constrainedDimensions.height;
-      
-      // Ensure crop area stays within canvas bounds
-      const canvas = appState.canvas;
-      cropRect.x = Math.max(0, Math.min(canvas.width - cropRect.width, cropRect.x));
-      cropRect.y = Math.max(0, Math.min(canvas.height - cropRect.height, cropRect.y));
-      
-      updateCropArea();
-    }
-  };
+
   
   // Listen for tool changes
   document.addEventListener('toolChanged', (e) => {
