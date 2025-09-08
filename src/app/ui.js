@@ -717,6 +717,21 @@ function setupCropTool() {
   let dragType = null; // 'move' or handle direction
   let dragStart = { x: 0, y: 0 };
   let initialRect = { x: 0, y: 0, width: 0, height: 0 };
+  let aspectRatio = 'free'; // Current aspect ratio mode
+  let snapGuides = { vertical: [], horizontal: [] };
+  let isAltPressed = false;
+  
+  // Snapping configuration
+  const SNAP_THRESHOLD = 10; // pixels
+  
+  // Aspect ratio presets
+  const ASPECT_RATIOS = {
+    'free': null,
+    '1:1': 1,
+    '4:3': 4/3,
+    '16:9': 16/9,
+    '3:2': 3/2
+  };
 
   // Show crop overlay when crop tool is activated
   function showCropOverlay() {
@@ -751,6 +766,81 @@ function setupCropTool() {
     cropOverlay.style.display = 'none';
   }
 
+  // Calculate snapped position for crop area
+  function getSnappedCropPosition(x, y, width, height) {
+    let snappedX = x;
+    let snappedY = y;
+    snapGuides = { vertical: [], horizontal: [] };
+    
+    const canvas = appState.canvas;
+    
+    // Canvas snap points
+    const canvasSnapPoints = {
+      x: [
+        0, // left edge
+        canvas.width / 2 - width / 2, // horizontal center
+        canvas.width - width // right edge
+      ],
+      y: [
+        0, // top edge
+        canvas.height / 2 - height / 2, // vertical center
+        canvas.height - height // bottom edge
+      ]
+    };
+    
+    // Check X snapping
+    for (const snapX of canvasSnapPoints.x) {
+      if (Math.abs(x - snapX) <= SNAP_THRESHOLD) {
+        snappedX = snapX;
+        if (snapX === 0) {
+          snapGuides.vertical.push({ x: 0, type: 'canvas-left' });
+        } else if (snapX === canvas.width / 2 - width / 2) {
+          snapGuides.vertical.push({ x: canvas.width / 2, type: 'canvas-center' });
+        } else {
+          snapGuides.vertical.push({ x: canvas.width, type: 'canvas-right' });
+        }
+        break;
+      }
+    }
+    
+    // Check Y snapping
+    for (const snapY of canvasSnapPoints.y) {
+      if (Math.abs(y - snapY) <= SNAP_THRESHOLD) {
+        snappedY = snapY;
+        if (snapY === 0) {
+          snapGuides.horizontal.push({ y: 0, type: 'canvas-top' });
+        } else if (snapY === canvas.height / 2 - height / 2) {
+          snapGuides.horizontal.push({ y: canvas.height / 2, type: 'canvas-center' });
+        } else {
+          snapGuides.horizontal.push({ y: canvas.height, type: 'canvas-bottom' });
+        }
+        break;
+      }
+    }
+    
+    return { x: snappedX, y: snappedY };
+  }
+  
+  // Apply aspect ratio constraint to dimensions
+  function applyAspectRatio(width, height, ratioKey) {
+    if (ratioKey === 'free' || !ASPECT_RATIOS[ratioKey]) {
+      return { width, height };
+    }
+    
+    const ratio = ASPECT_RATIOS[ratioKey];
+    const currentRatio = width / height;
+    
+    if (currentRatio > ratio) {
+      // Width is too large, adjust it
+      width = height * ratio;
+    } else {
+      // Height is too large, adjust it
+      height = width / ratio;
+    }
+    
+    return { width, height };
+  }
+  
   // Update crop area visual position and size
   function updateCropArea() {
     const canvas = appState.canvas;
@@ -761,12 +851,72 @@ function setupCropTool() {
     cropArea.style.top = (cropRect.y * scaleY) + 'px';
     cropArea.style.width = (cropRect.width * scaleX) + 'px';
     cropArea.style.height = (cropRect.height * scaleY) + 'px';
+    
+    // Draw snap guides
+    drawCropSnapGuides();
+  }
+  
+  // Draw snap guides for crop tool
+  function drawCropSnapGuides() {
+    // Remove existing guides
+    const existingGuides = cropOverlay.querySelectorAll('.snap-guide');
+    existingGuides.forEach(guide => guide.remove());
+    
+    if (!isDragging) return;
+    
+    const canvas = appState.canvas;
+    const scaleX = canvas.offsetWidth / canvas.width;
+    const scaleY = canvas.offsetHeight / canvas.height;
+    
+    // Draw vertical guides
+    snapGuides.vertical.forEach(guide => {
+      const line = document.createElement('div');
+      line.className = 'snap-guide snap-guide-vertical';
+      line.style.position = 'absolute';
+      line.style.left = (guide.x * scaleX) + 'px';
+      line.style.top = '0px';
+      line.style.width = '1px';
+      line.style.height = '100%';
+      line.style.background = '#007acc';
+      line.style.pointerEvents = 'none';
+      line.style.zIndex = '15';
+      cropOverlay.appendChild(line);
+    });
+    
+    // Draw horizontal guides
+    snapGuides.horizontal.forEach(guide => {
+      const line = document.createElement('div');
+      line.className = 'snap-guide snap-guide-horizontal';
+      line.style.position = 'absolute';
+      line.style.left = '0px';
+      line.style.top = (guide.y * scaleY) + 'px';
+      line.style.width = '100%';
+      line.style.height = '1px';
+      line.style.background = '#007acc';
+      line.style.pointerEvents = 'none';
+      line.style.zIndex = '15';
+      cropOverlay.appendChild(line);
+    });
   }
 
+  // Handle keyboard events for alt/option key
+  function onKeyDown(e) {
+    if (e.altKey || e.key === 'Alt') {
+      isAltPressed = true;
+    }
+  }
+  
+  function onKeyUp(e) {
+    if (!e.altKey && e.key === 'Alt') {
+      isAltPressed = false;
+    }
+  }
+  
   // Handle mouse down on crop area or handles
   function onMouseDown(e) {
     e.preventDefault();
     isDragging = true;
+    isAltPressed = e.altKey;
     
     const canvas = appState.canvas;
     const canvasContainer = canvas.parentElement;
@@ -792,11 +942,15 @@ function setupCropTool() {
     
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
   }
 
   // Handle mouse move for dragging
   function onMouseMove(e) {
     if (!isDragging) return;
+    
+    isAltPressed = e.altKey; // Update alt key state
     
     const canvas = appState.canvas;
     const canvasContainer = canvas.parentElement;
@@ -817,27 +971,88 @@ function setupCropTool() {
     
     if (dragType === 'move') {
       // Move the entire crop area
-      cropRect.x = Math.max(0, Math.min(appState.canvas.width - cropRect.width, initialRect.x + deltaX));
-      cropRect.y = Math.max(0, Math.min(appState.canvas.height - cropRect.height, initialRect.y + deltaY));
+      let newX = initialRect.x + deltaX;
+      let newY = initialRect.y + deltaY;
+      
+      // Apply bounds checking
+      newX = Math.max(0, Math.min(canvas.width - cropRect.width, newX));
+      newY = Math.max(0, Math.min(canvas.height - cropRect.height, newY));
+      
+      // Apply snapping
+      const snapped = getSnappedCropPosition(newX, newY, cropRect.width, cropRect.height);
+      cropRect.x = snapped.x;
+      cropRect.y = snapped.y;
     } else {
       // Resize based on handle direction
-      const newRect = { ...initialRect };
+      let newRect = { ...initialRect };
       
-      if (dragType.includes('n')) {
-        const newY = Math.max(0, Math.min(initialRect.y + initialRect.height - 10, initialRect.y + deltaY));
-        newRect.height = initialRect.height - (newY - initialRect.y);
-        newRect.y = newY;
+      if (isAltPressed) {
+        // Alt/Option key pressed - resize from center
+        const centerX = initialRect.x + initialRect.width / 2;
+        const centerY = initialRect.y + initialRect.height / 2;
+        
+        if (dragType.includes('n') || dragType.includes('s')) {
+          // Vertical resize from center
+          const heightChange = dragType.includes('n') ? -deltaY * 2 : deltaY * 2;
+          newRect.height = Math.max(10, initialRect.height + heightChange);
+          newRect.y = centerY - newRect.height / 2;
+        }
+        
+        if (dragType.includes('w') || dragType.includes('e')) {
+          // Horizontal resize from center
+          const widthChange = dragType.includes('w') ? -deltaX * 2 : deltaX * 2;
+          newRect.width = Math.max(10, initialRect.width + widthChange);
+          newRect.x = centerX - newRect.width / 2;
+        }
+        
+        // For corner handles, resize both dimensions from center
+        if ((dragType.includes('n') || dragType.includes('s')) && 
+            (dragType.includes('w') || dragType.includes('e'))) {
+          const widthChange = dragType.includes('w') ? -deltaX * 2 : deltaX * 2;
+          const heightChange = dragType.includes('n') ? -deltaY * 2 : deltaY * 2;
+          
+          newRect.width = Math.max(10, initialRect.width + widthChange);
+          newRect.height = Math.max(10, initialRect.height + heightChange);
+          newRect.x = centerX - newRect.width / 2;
+          newRect.y = centerY - newRect.height / 2;
+        }
+      } else {
+        // Normal resize behavior
+        if (dragType.includes('n')) {
+          const newY = Math.max(0, Math.min(initialRect.y + initialRect.height - 10, initialRect.y + deltaY));
+          newRect.height = initialRect.height - (newY - initialRect.y);
+          newRect.y = newY;
+        }
+        if (dragType.includes('s')) {
+          newRect.height = Math.max(10, Math.min(canvas.height - initialRect.y, initialRect.height + deltaY));
+        }
+        if (dragType.includes('w')) {
+          const newX = Math.max(0, Math.min(initialRect.x + initialRect.width - 10, initialRect.x + deltaX));
+          newRect.width = initialRect.width - (newX - initialRect.x);
+          newRect.x = newX;
+        }
+        if (dragType.includes('e')) {
+          newRect.width = Math.max(10, Math.min(canvas.width - initialRect.x, initialRect.width + deltaX));
+        }
       }
-      if (dragType.includes('s')) {
-        newRect.height = Math.max(10, Math.min(appState.canvas.height - initialRect.y, initialRect.height + deltaY));
-      }
-      if (dragType.includes('w')) {
-        const newX = Math.max(0, Math.min(initialRect.x + initialRect.width - 10, initialRect.x + deltaX));
-        newRect.width = initialRect.width - (newX - initialRect.x);
-        newRect.x = newX;
-      }
-      if (dragType.includes('e')) {
-        newRect.width = Math.max(10, Math.min(appState.canvas.width - initialRect.x, initialRect.width + deltaX));
+      
+      // Apply aspect ratio constraint
+      const constrainedDimensions = applyAspectRatio(newRect.width, newRect.height, aspectRatio);
+      newRect.width = constrainedDimensions.width;
+      newRect.height = constrainedDimensions.height;
+      
+      // Apply bounds checking
+      newRect.x = Math.max(0, Math.min(canvas.width - newRect.width, newRect.x));
+      newRect.y = Math.max(0, Math.min(canvas.height - newRect.height, newRect.y));
+      
+      // If aspect ratio was applied and we're not in alt mode, adjust position for corner handles
+      if (aspectRatio !== 'free' && !isAltPressed) {
+        if (dragType.includes('n') && newRect.height !== (initialRect.height - (newRect.y - initialRect.y))) {
+          newRect.y = initialRect.y + initialRect.height - newRect.height;
+        }
+        if (dragType.includes('w') && newRect.width !== (initialRect.width - (newRect.x - initialRect.x))) {
+          newRect.x = initialRect.x + initialRect.width - newRect.width;
+        }
       }
       
       cropRect = newRect;
@@ -850,8 +1065,16 @@ function setupCropTool() {
   function onMouseUp() {
     isDragging = false;
     dragType = null;
+    isAltPressed = false;
+    
+    // Clear snap guides
+    const existingGuides = cropOverlay.querySelectorAll('.snap-guide');
+    existingGuides.forEach(guide => guide.remove());
+    
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup', onKeyUp);
   }
 
   // Confirm crop operation
@@ -916,6 +1139,24 @@ function setupCropTool() {
   confirmBtn.addEventListener('click', confirmCrop);
   cancelBtn.addEventListener('click', cancelCrop);
 
+  // Expose aspect ratio setter globally for properties panel
+  window.setCropAspectRatio = (newAspectRatio) => {
+    aspectRatio = newAspectRatio;
+    // If not free aspect ratio, apply constraint to current crop rect
+    if (aspectRatio !== 'free' && appState.canvas) {
+      const constrainedDimensions = applyAspectRatio(cropRect.width, cropRect.height, aspectRatio);
+      cropRect.width = constrainedDimensions.width;
+      cropRect.height = constrainedDimensions.height;
+      
+      // Ensure crop area stays within canvas bounds
+      const canvas = appState.canvas;
+      cropRect.x = Math.max(0, Math.min(canvas.width - cropRect.width, cropRect.x));
+      cropRect.y = Math.max(0, Math.min(canvas.height - cropRect.height, cropRect.y));
+      
+      updateCropArea();
+    }
+  };
+  
   // Listen for tool changes
   document.addEventListener('toolChanged', (e) => {
     if (e.detail.tool === 'crop') {
@@ -933,7 +1174,41 @@ function setupPropertiesPanel() {
     const propertiesContent = document.getElementById('propertiesContent');
     const selectedLayer = appState.getSelectedLayer();
     
-    if (appState.activeTool === 'text' || (selectedLayer && selectedLayer.type === 'text')) {
+    if (appState.activeTool === 'crop') {
+      // Show crop tool properties
+      propertiesContent.innerHTML = `
+        <div class="property-group">
+          <label>Aspect Ratio:</label>
+          <select id="aspectRatioSelect">
+            <option value="free">Free</option>
+            <option value="1:1">1:1 (Square)</option>
+            <option value="4:3">4:3</option>
+            <option value="16:9">16:9</option>
+            <option value="3:2">3:2</option>
+          </select>
+        </div>
+        <div class="property-group">
+          <label>Instructions:</label>
+          <div class="crop-instructions">
+            <p>• Drag to move crop area</p>
+            <p>• Drag handles to resize</p>
+            <p>• Hold Alt/Option + drag for center resize</p>
+            <p>• Crop area snaps to canvas edges and center</p>
+          </div>
+        </div>
+      `;
+      
+      // Add event listener for aspect ratio selection
+      const aspectRatioSelect = document.getElementById('aspectRatioSelect');
+      aspectRatioSelect.value = aspectRatio; // Set current value
+      
+      aspectRatioSelect.addEventListener('change', () => {
+         // Update aspect ratio in crop tool scope
+         if (window.setCropAspectRatio) {
+           window.setCropAspectRatio(aspectRatioSelect.value);
+         }
+       });
+    } else if (appState.activeTool === 'text' || (selectedLayer && selectedLayer.type === 'text')) {
       // Show text properties
       const textLayer = selectedLayer && selectedLayer.type === 'text' ? selectedLayer : null;
       propertiesContent.innerHTML = `
