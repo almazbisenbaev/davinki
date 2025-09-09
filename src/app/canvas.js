@@ -42,7 +42,7 @@ export function render() {
       // Calculate text dimensions for proper bounding box and interactions
       const textMetrics = ctx.measureText(layer.text);
       layer.width = textMetrics.width;
-      layer.height = layer.fontSize * 1.2; // Add line height spacing
+      layer.height = layer.fontSize * 1.2;
       
       // Only render canvas text when not editing - during editing, show HTML input instead
       if (!layer.isEditing) {
@@ -87,7 +87,14 @@ function attachCanvasEvents() {
  * Handle mouse down events - initiates dragging or text tool interactions
  * Converts screen coordinates to canvas coordinates and determines interaction type
  */
+/**
+ * Handle mouse down events on the canvas
+ * Initiates drag operations for move tool or delegates to text tool handler
+ * @param {MouseEvent} e - The mouse event containing position data
+ */
 function onMouseDown(e) {
+  // Convert mouse coordinates from viewport space to canvas space
+  // This accounts for canvas position, padding, and any CSS transforms
   const rect = appState.canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
@@ -98,12 +105,14 @@ function onMouseDown(e) {
     return;
   }
 
+  // Only handle drag operations for move tool
   if (appState.activeTool !== 'move') return;
 
   const selectedLayer = appState.getSelectedLayer();
   if (!selectedLayer) return;
 
-  // Check if mouse is inside the selected layer's bounds for dragging
+  // Perform hit testing: check if mouse click is within the selected layer's bounding box
+  // This determines whether we should start a drag operation
   if (
     mouseX >= selectedLayer.x &&
     mouseX <= selectedLayer.x + selectedLayer.width &&
@@ -113,13 +122,14 @@ function onMouseDown(e) {
     // Save state before starting drag operation for undo functionality
     appState.saveStateToHistory('Move layer');
     
-    // Initialize drag operation with current mouse position and layer offset
     appState.isDragging = true;
     appState.dragStart = { x: mouseX, y: mouseY };
+    
     appState.dragLayerOffset = {
       x: mouseX - selectedLayer.x,
       y: mouseY - selectedLayer.y
     };
+    
     appState.canvas.style.cursor = 'grabbing';
   }
 }
@@ -157,25 +167,32 @@ const SNAP_THRESHOLD = CANVAS.SNAP_THRESHOLD;
 /**
  * Calculate snapped position for a layer being dragged
  * Implements intelligent snapping to canvas edges, center, and other layers
- * Returns snapped coordinates and generates visual guide lines
+ * This function provides visual feedback through snap guides and ensures precise alignment
+ * @param {number} x - Proposed X position of the layer
+ * @param {number} y - Proposed Y position of the layer
+ * @param {Object} currentLayer - The layer being moved (to exclude from snapping calculations)
+ * @returns {Object} Object with snapped x, y coordinates
  */
 function getSnappedPosition(x, y, currentLayer) {
   let snappedX = x;
   let snappedY = y;
+  // Store guide lines for visual feedback during drag operations
   let snapGuides = { vertical: [], horizontal: [] };
   
   const canvas = appState.canvas;
-  // Get all other visible layers for snapping calculations
+  // Get all other visible and loaded layers for snapping calculations
+  // Exclude the current layer to prevent self-snapping
   const otherLayers = appState.layers.filter(layer => 
     layer.id !== currentLayer.id && layer.visible && layer.isLoaded
   );
   
   // Define canvas edge and center snap points for precise alignment
+  // These provide common alignment points that designers frequently use
   const canvasSnapPoints = {
     x: [
       0, // left edge alignment
-      canvas.width / 2 - currentLayer.width / 2, // horizontal center
-      canvas.width - currentLayer.width // right edge alignment
+      canvas.width / 2 - currentLayer.width / 2, // horizontal center alignment
+      canvas.width - currentLayer.width // right edge alignment (accounts for layer width)
     ],
     y: [
       0, // top edge alignment
@@ -215,28 +232,30 @@ function getSnappedPosition(x, y, currentLayer) {
     }
   }
   
-  // Check snapping to other layers
+  // Check snapping to other layers - enables precise alignment between elements
   for (const layer of otherLayers) {
-    // Layer snap points for X axis
+    // Calculate snap points for X axis alignment
+    // These allow the current layer to align with edges or center of other layers
     const layerSnapPointsX = [
-      layer.x, // left edge
-      layer.x + layer.width / 2 - currentLayer.width / 2, // center align
-      layer.x + layer.width - currentLayer.width // right edge
+      layer.x, // align left edges
+      layer.x + layer.width / 2 - currentLayer.width / 2, // align horizontal centers
+      layer.x + layer.width - currentLayer.width // align right edges
     ];
     
-    // Layer snap points for Y axis
+    // Calculate snap points for Y axis alignment
+    // These allow the current layer to align with edges or center of other layers
     const layerSnapPointsY = [
-      layer.y, // top edge
-      layer.y + layer.height / 2 - currentLayer.height / 2, // center align
-      layer.y + layer.height - currentLayer.height // bottom edge
+      layer.y, // align top edges
+      layer.y + layer.height / 2 - currentLayer.height / 2, // align vertical centers
+      layer.y + layer.height - currentLayer.height // align bottom edges
     ];
     
-    // Check X snapping
+    // Check X axis snapping within threshold distance
     for (let i = 0; i < layerSnapPointsX.length; i++) {
       const snapX = layerSnapPointsX[i];
       if (Math.abs(x - snapX) <= SNAP_THRESHOLD) {
         snappedX = snapX;
-        // Add vertical guide line
+        // Create visual guide line at the snap position
         if (i === 0) {
           snapGuides.vertical.push({ x: layer.x, type: 'layer-left' });
         } else if (i === 1) {
@@ -244,16 +263,16 @@ function getSnappedPosition(x, y, currentLayer) {
         } else {
           snapGuides.vertical.push({ x: layer.x + layer.width, type: 'layer-right' });
         }
-        break;
+        break; // Stop at first snap to prevent multiple snaps on same axis
       }
     }
     
-    // Check Y snapping
+    // Check Y axis snapping within threshold distance
     for (let i = 0; i < layerSnapPointsY.length; i++) {
       const snapY = layerSnapPointsY[i];
       if (Math.abs(y - snapY) <= SNAP_THRESHOLD) {
         snappedY = snapY;
-        // Add horizontal guide line
+        // Create visual guide line at the snap position
         if (i === 0) {
           snapGuides.horizontal.push({ y: layer.y, type: 'layer-top' });
         } else if (i === 1) {
@@ -261,7 +280,7 @@ function getSnappedPosition(x, y, currentLayer) {
         } else {
           snapGuides.horizontal.push({ y: layer.y + layer.height, type: 'layer-bottom' });
         }
-        break;
+        break; // Stop at first snap to prevent multiple snaps on same axis
       }
     }
   }

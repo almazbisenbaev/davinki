@@ -21,10 +21,9 @@ export function initTools(state) {
  * @param {string} toolName - Name of the tool to activate ('move', 'text', etc.)
  */
 export function setActiveTool(toolName) {
-  // Update the application state
   appState.activeTool = toolName;
 
-  // Update UI - highlight the active tool button
+  // Highlight the active tool button in the UI
   document.querySelectorAll('.tool').forEach(el => {
     el.classList.toggle('active', el.dataset.tool === toolName);
   });

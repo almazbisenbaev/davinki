@@ -83,7 +83,6 @@ export function initAppState() {
         img = new Image();
         img.src = imageData;
       } else {
-        // Create a white canvas for new blank layers
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = width;
         tempCanvas.height = height;
@@ -95,7 +94,6 @@ export function initAppState() {
         img.src = tempCanvas.toDataURL();
       }
 
-      // Create layer object with all necessary properties
       const layer = {
         id: `layer-${nextLayerId++}`, // Unique identifier using global counter
         name: `${name} ${nextLayerId - 1}`, // Human-readable name with number
@@ -131,7 +129,6 @@ export function initAppState() {
       // Save state before adding layer for undo functionality
       this.saveStateToHistory('Add layer');
       
-      // Add to beginning of layers array (top of z-order)
       this.layers.unshift(layer);
       this.selectedLayerId = layer.id; // Auto-select new layer
       this.markAsModified(); // Track changes for save system
@@ -182,12 +179,10 @@ export function initAppState() {
      * @param {string} operation - Description of the operation being performed
      */
     saveStateToHistory(operation = 'Unknown operation') {
-      // Remove any future history if we're not at the end
       if (this.historyIndex < this.history.length - 1) {
         this.history = this.history.slice(0, this.historyIndex + 1);
       }
 
-      // Create deep copy of current state including canvas dimensions
       const stateSnapshot = {
         layers: JSON.parse(JSON.stringify(this.layers.map(layer => ({
           ...layer,
@@ -249,45 +244,51 @@ export function initAppState() {
 
     /**
      * Restore state from history at current index
-     * Recreates Image objects, restores canvas dimensions, and triggers re-render
+     * This is a complex operation that reconstructs the entire application state
+     * from a serialized snapshot, including recreating Image objects
      */
     restoreStateFromHistory() {
       if (this.historyIndex >= 0 && this.historyIndex < this.history.length) {
         const snapshot = this.history[this.historyIndex];
         
         // Restore canvas dimensions if they exist in the snapshot
+        // This handles cases where canvas size was changed as part of the operation
         if (this.canvas && snapshot.canvasWidth && snapshot.canvasHeight) {
           this.canvas.width = snapshot.canvasWidth;
           this.canvas.height = snapshot.canvasHeight;
         }
         
-        // Restore layers with Image objects
+        // Restore layers with proper Image object reconstruction
+        // This is complex because Image objects can't be serialized directly
         this.layers = snapshot.layers.map(layerData => {
           const layer = { ...layerData };
           
           if (layerData.image && layerData.type !== 'text') {
-            // Recreate Image object for image layers
+            // Recreate Image object for image layers from stored src
+            // The image needs to be loaded asynchronously
             const img = new Image();
-            img.src = layerData.image;
+            img.src = layerData.image; // This was stored as base64 or URL
             layer.image = img;
-            layer.isLoaded = false;
+            layer.isLoaded = false; // Mark as loading until onload fires
             
+            // Set up async loading handler
             img.onload = () => {
               layer.isLoaded = true;
-              render();
+              render(); // Re-render when image is ready
             };
           } else {
-            // Text layers don't need image recreation
+            // Text layers are immediately ready (no async loading required)
             layer.isLoaded = true;
           }
           
           return layer;
         });
         
+        // Restore selection state and mark as modified
         this.selectedLayerId = snapshot.selectedLayerId;
         this.markAsModified();
         
-        // Update canvas size display and re-render
+        // Update UI components and trigger re-render
         if (window.updateCanvasSize) window.updateCanvasSize();
         render();
       }

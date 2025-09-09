@@ -15,16 +15,16 @@ export function initUI(state) {
   appState = state;
   
   // Initialize all UI subsystems in proper order
-  initTools(state); // Set up tool system
-  setupWelcomeScreen(); // Project creation/loading interface
-  setupToolbar(); // Tool selection buttons
-  setupMenu(); // File menu and export functionality
-  setupLayerControls(); // Layer management panel
-  setupLayerContextMenu(); // Right-click layer operations
-  setupBeforeUnload(); // Prevent accidental data loss
-  setupCanvasResize(); // Canvas size management
-  setupCropTool(); // Image cropping functionality
-  setupPropertiesPanel(); // Layer property editing
+  initTools(state);
+  setupWelcomeScreen();
+  setupToolbar();
+  setupMenu();
+  setupLayerControls();
+  setupLayerContextMenu();
+  setupBeforeUnload();
+  setupCanvasResize();
+  setupCropTool();
+  setupPropertiesPanel();
   
   // Connect canvas operations to UI updates
   setUICallbacks(window.updateLayersPanel, window.updatePropertiesPanel);
@@ -74,7 +74,6 @@ function setupWelcomeScreen() {
 
   // Handle new blank project creation
   btnNew.addEventListener('click', () => {
-    // Get canvas dimensions from user input with fallback defaults
     const width = parseInt(document.getElementById('canvasWidth').value) || CANVAS.DEFAULT_WIDTH;
     const height = parseInt(document.getElementById('canvasHeight').value) || CANVAS.DEFAULT_WIDTH;
     
@@ -87,7 +86,6 @@ function setupWelcomeScreen() {
 
   // Handle project creation from uploaded image
   btnUpload.addEventListener('click', () => {
-    // Create invisible file input for image selection
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*'; // Only allow image files
@@ -234,7 +232,6 @@ function updateUndoRedoButtons() {
     const canUndo = appState.canUndo();
     undoBtn.disabled = !canUndo;
     
-    // Update tooltip to show what operation can be undone
     if (canUndo && appState.lastOperation) {
       undoBtn.title = `Undo: ${appState.lastOperation}`;
     } else {
@@ -454,34 +451,43 @@ function setupLayerControls() {
         showLayerContextMenu(e, layer.id);
       });
       
-      // Drag and drop events
+      // Drag and drop events for layer reordering
+      // This implements a complete drag-and-drop system for changing layer z-order
+      
       div.addEventListener('dragstart', (e) => {
+        // Store the layer ID in the drag data transfer for retrieval on drop
         e.dataTransfer.setData('text/plain', layer.id);
-        div.classList.add('dragging');
+        div.classList.add('dragging'); // Visual feedback for the dragged element
       });
       
       div.addEventListener('dragend', () => {
+        // Clean up visual state when drag operation completes
         div.classList.remove('dragging');
       });
       
       div.addEventListener('dragover', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Required to allow drop events
         const draggingElement = document.querySelector('.dragging');
+        // Only show drop target visual feedback if we're dragging a different layer
         if (draggingElement && draggingElement !== div) {
           div.classList.add('drag-over');
         }
       });
       
       div.addEventListener('dragleave', () => {
+        // Remove drop target visual feedback when mouse leaves the element
         div.classList.remove('drag-over');
       });
       
       div.addEventListener('drop', (e) => {
         e.preventDefault();
         div.classList.remove('drag-over');
+        
+        // Retrieve the dragged layer ID and target position
         const draggedLayerId = e.dataTransfer.getData('text/plain');
         const targetIndex = parseInt(div.dataset.layerIndex);
         
+        // Prevent dropping a layer onto itself
         if (draggedLayerId !== layer.id) {
           moveLayer(draggedLayerId, targetIndex);
         }
@@ -491,19 +497,28 @@ function setupLayerControls() {
     });
   };
   
-  // Helper function to move layers
+  /**
+   * Move a layer to a new position in the z-order
+   * This function handles the complex array manipulation required for layer reordering
+   * @param {string} layerId - ID of the layer to move
+   * @param {number} targetIndex - New position index in the layers array
+   */
   function moveLayer(layerId, targetIndex) {
     const sourceIndex = appState.layers.findIndex(l => l.id === layerId);
+    // Validate that the layer exists and we're actually moving it
     if (sourceIndex === -1 || sourceIndex === targetIndex) return;
     
     // Save state before moving layer for undo functionality
     appState.saveStateToHistory('Reorder layer');
     
+    // Remove layer from its current position and insert at target position
+    // This is a two-step process to maintain array integrity
     const [movedLayer] = appState.layers.splice(sourceIndex, 1);
     appState.layers.splice(targetIndex, 0, movedLayer);
     
+    // Update UI and mark project as modified
     updateLayersPanel();
-    render();
+    render(); // Re-render canvas to reflect new z-order
     appState.markAsModified();
     window.updateUndoRedoButtons();
   }
