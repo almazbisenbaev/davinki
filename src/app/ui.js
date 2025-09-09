@@ -250,6 +250,35 @@ window.updateUndoRedoButtons = updateUndoRedoButtons;
 window.updateCanvasSize = updateCanvasSize;
 
 function setupMenu() {
+  // Setup menu button click handlers for dropdown toggles
+  const menuButtons = document.querySelectorAll('.menu-title');
+  menuButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdownId = button.getAttribute('data-dropdown');
+      const dropdown = document.getElementById(dropdownId);
+      
+      // Close all other dropdowns first
+      document.querySelectorAll('.dropdown.show').forEach(openDropdown => {
+        if (openDropdown !== dropdown) {
+          openDropdown.classList.remove('show');
+        }
+      });
+      
+      // Toggle current dropdown
+      dropdown.classList.toggle('show');
+    });
+  });
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu')) {
+      document.querySelectorAll('.dropdown.show').forEach(dropdown => {
+        dropdown.classList.remove('show');
+      });
+    }
+  });
+
   const fileNewProject = document.getElementById('fileNewProject');
   fileNewProject.addEventListener('click', () => {
     let shouldProceed = true;

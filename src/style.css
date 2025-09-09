@@ -226,33 +226,64 @@ body {
 .menu {
   position: relative;
   display: inline-block;
-  cursor: pointer;
 }
 
 .menu-title {
+  height: 28px;
   padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
-.menu:hover .dropdown {
-  display: block;
+.menu-title:hover, .menu-title:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown {
-  display: none;
+  border: 1px solid #ffffff33;
+  background: #1B1B1Bbb;
+  border-radius: 6px;
+  backdrop-filter: blur(20px);
+
+  opacity: 0;
+  visibility: hidden;
+
   position: absolute;
-  background: #444;
   min-width: 160px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  padding: 2px;
   z-index: 1;
+  top: calc(100% + 10px);
+  left: -4px;
+
+  transform: translateY(-4px);
+  transition: 0.15s;
+}
+
+.dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .dropdown-item {
-  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+
+  padding: 8px 12px;
+
   cursor: pointer;
+  transition: 0.15s;
 }
 
 .dropdown-item:hover {
-  background: #555;
+  background: #ffffff20;
 }
 
 .toolbar {
