@@ -7,11 +7,12 @@
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
+
   <!-- Welcome Modal -->
-  <div id="welcomeModal" class="modal">
+  <div id="welcomeModal" class="modal welcome-modal">
     <div class="modal-content">
 
-      <div class="welcome-header">
+      <div class="welcome-modal-header">
         <h2>DaVinki. <span>Online image editor</span></h2>
       </div>
 
@@ -32,18 +33,19 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="canvas-size-buttons">
-        <button class="ui-btn" id="btnNewProject">Create New Project</button>
-        <div>or</div>
-        <button class="ui-btn" id="btnUploadImage">Upload Image</button>
+        <div class="canvas-size-buttons">
+          <button class="ui-btn ui-btn-primary" id="btnNewProject">Create New Project</button>
+          <div>or</div>
+          <button class="ui-btn ui-btn-primary" id="btnUploadImage">Upload Image</button>
+        </div>
+        
       </div>
 
       <div class="welcome-footer">Author: <a href="https://helloalmaz.com" target="_blank">@almazbisenbaev</a></div>
 
     </div>
   </div>
+
 
   <!-- Export Modal -->
   <div id="exportModal" class="modal" style="display: none;">
