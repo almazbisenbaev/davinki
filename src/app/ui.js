@@ -68,7 +68,7 @@ function updateCanvasSize() {
  * Handles both blank canvas creation and image upload workflows
  */
 function setupWelcomeScreen() {
-  const welcomeModal = document.getElementById('welcomeModal');
+  const welcomeScreen = document.getElementById('welcomeScreen');
   const btnNew = document.getElementById('btnNewProject');
   const btnUpload = document.getElementById('btnUploadImage');
 
@@ -81,7 +81,7 @@ function setupWelcomeScreen() {
     createNewProject(width, height);
     
     // Hide welcome screen and show main application
-    welcomeModal.style.display = 'none';
+    welcomeScreen.style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
   });
 
@@ -106,7 +106,7 @@ function setupWelcomeScreen() {
         createNewProjectFromImage(event.target.result, layerName);
         
         // Hide welcome screen and show main application
-        welcomeModal.style.display = 'none';
+        welcomeScreen.style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
       };
       reader.readAsDataURL(file); // Convert to base64 for canvas use
@@ -296,7 +296,7 @@ function setupMenu() {
       appState.hasUnsavedChanges = false;
       
       // Show welcome screen
-      document.getElementById('welcomeModal').style.display = 'flex';
+      document.getElementById('welcomeScreen').style.display = 'flex';
       document.getElementById('app').classList.add('hidden');
       
       // Reset canvas size inputs to defaults
