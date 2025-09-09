@@ -1,6 +1,7 @@
 import { initCanvas, render, setUICallbacks } from './canvas.js';
 import { initTools, setActiveTool } from './tools.js';
 import { showUndoFeedback } from './utils/dom.js';
+import { CANVAS, COLORS, TIMING, TEXT, CROP_PRESETS } from './utils/constants.js';
 
 // Global reference to application state
 let appState;
@@ -74,8 +75,8 @@ function setupWelcomeScreen() {
   // Handle new blank project creation
   btnNew.addEventListener('click', () => {
     // Get canvas dimensions from user input with fallback defaults
-    const width = parseInt(document.getElementById('canvasWidth').value) || 800;
-    const height = parseInt(document.getElementById('canvasHeight').value) || 800;
+    const width = parseInt(document.getElementById('canvasWidth').value) || CANVAS.DEFAULT_WIDTH;
+    const height = parseInt(document.getElementById('canvasHeight').value) || CANVAS.DEFAULT_WIDTH;
     
     createNewProject(width, height);
     
@@ -683,15 +684,15 @@ let aspectRatio = 'free'; // Current aspect ratio mode
 let snapGuides = { vertical: [], horizontal: [] };
 let isAltPressed = false;
 
-// Snapping configuration
-const SNAP_THRESHOLD = 10; // pixels
+// Use centralized snap threshold from constants
+const SNAP_THRESHOLD = CANVAS.SNAP_THRESHOLD;
 
-// Aspect ratio presets
+// Use centralized aspect ratio presets from constants
 const ASPECT_RATIOS = {
   'free': null,
-  '1:1': 1,
-  '4:3': 4/3,
-  '16:9': 16/9,
+  '1:1': CROP_PRESETS.SQUARE.width / CROP_PRESETS.SQUARE.height,
+  '4:3': CROP_PRESETS.PHOTO.width / CROP_PRESETS.PHOTO.height,
+  '16:9': CROP_PRESETS.LANDSCAPE.width / CROP_PRESETS.LANDSCAPE.height,
   '3:2': 3/2
 };
 
@@ -851,7 +852,7 @@ function drawCropSnapGuides() {
     line.style.top = '0px';
     line.style.width = '1px';
     line.style.height = '100%';
-    line.style.background = '#007acc';
+    line.style.background = COLORS.PRIMARY;
     line.style.pointerEvents = 'none';
     line.style.zIndex = '15';
     cropOverlay.appendChild(line);
@@ -866,7 +867,7 @@ function drawCropSnapGuides() {
     line.style.top = (guide.y * scaleY) + 'px';
     line.style.width = '100%';
     line.style.height = '1px';
-    line.style.background = '#007acc';
+    line.style.background = COLORS.PRIMARY;
     line.style.pointerEvents = 'none';
     line.style.zIndex = '15';
     cropOverlay.appendChild(line);
@@ -1191,8 +1192,8 @@ function setupPropertiesPanel() {
       propertiesContent.innerHTML = `
         <div class="property-group">
           <label>Font Size:</label>
-          <input type="range" id="fontSizeSlider" min="8" max="72" value="${textLayer ? textLayer.fontSize : 24}">
-          <span id="fontSizeValue">${textLayer ? textLayer.fontSize : 24}px</span>
+          <input type="range" id="fontSizeSlider" min="${TEXT.MIN_FONT_SIZE}" max="${TEXT.MAX_FONT_SIZE}" value="${textLayer ? textLayer.fontSize : TEXT.DEFAULT_FONT_SIZE}">
+          <span id="fontSizeValue">${textLayer ? textLayer.fontSize : TEXT.DEFAULT_FONT_SIZE}px</span>
         </div>
         <div class="property-group">
           <label>Text Color:</label>

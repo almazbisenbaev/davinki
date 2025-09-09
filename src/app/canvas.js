@@ -1,5 +1,6 @@
 import { setActiveTool } from './tools.js';
 import { createTextInput } from './utils/dom.js';
+import { CANVAS, COLORS } from './utils/constants.js';
 
 // Global state reference for canvas operations
 let appState;
@@ -57,7 +58,7 @@ export function render() {
 
     // Draw selection bounding box for the currently selected layer
     if (layer.id === appState.selectedLayerId) {
-      ctx.strokeStyle = '#0078d7'; // Blue selection color
+      ctx.strokeStyle = COLORS.PRIMARY; // Blue selection color
       ctx.lineWidth = 2;
       ctx.strokeRect(layer.x, layer.y, layer.width, layer.height);
     }
@@ -150,8 +151,8 @@ function onMouseMove(e) {
   render();
 }
 
-// Snapping configuration - distance threshold for snap activation
-const SNAP_THRESHOLD = 10; // pixels
+// Use centralized snap threshold from constants
+const SNAP_THRESHOLD = CANVAS.SNAP_THRESHOLD;
 
 /**
  * Calculate snapped position for a layer being dragged

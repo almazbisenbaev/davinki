@@ -1,4 +1,5 @@
 import { render } from './canvas.js';
+import { TEXT } from './utils/constants.js';
 
 // Global counter for generating unique layer IDs
 let nextLayerId = 1;
@@ -147,7 +148,7 @@ export function initAppState() {
      * @param {string} color - Text color in hex format
      * @returns {Object} The created text layer object
      */
-    addTextLayer(text = "Sample text", x = 100, y = 100, fontSize = 24, color = "#000000") {
+    addTextLayer(text = TEXT.SAMPLE_TEXT, x = 100, y = 100, fontSize = TEXT.DEFAULT_FONT_SIZE, color = "#000000") {
       // Save state before adding text layer for undo functionality
       this.saveStateToHistory('Add text layer');
       
@@ -163,7 +164,7 @@ export function initAppState() {
         text, // The actual text content to display
         fontSize, // Font size in pixels
         color, // Text color in hex format
-        fontFamily: 'Arial', // Default font family
+        fontFamily: TEXT.DEFAULT_FONT_FAMILY.split(',')[0], // Default font family
         isLoaded: true, // Text layers are immediately ready (no async loading)
         isEditing: false // Whether text is currently being edited in-place
       };
