@@ -1,5 +1,6 @@
 import { initCanvas, render, setUICallbacks } from './canvas.js';
 import { initTools, setActiveTool } from './tools.js';
+import { showUndoFeedback } from './utils/dom.js';
 
 // Global reference to application state
 let appState;
@@ -241,41 +242,7 @@ function updateUndoRedoButtons() {
   }
 }
 
-/**
- * Show brief visual feedback about what operation was undone
- * @param {string} operation - The operation that was undone
- */
-function showUndoFeedback(operation) {
-  // Create or reuse feedback element
-  let feedback = document.getElementById('undo-feedback');
-  if (!feedback) {
-    feedback = document.createElement('div');
-    feedback.id = 'undo-feedback';
-    feedback.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #333;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-size: 14px;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    `;
-    document.body.appendChild(feedback);
-  }
-  
-  feedback.textContent = `Undone: ${operation}`;
-  feedback.style.opacity = '1';
-  
-  // Hide after 2 seconds
-  setTimeout(() => {
-    feedback.style.opacity = '0';
-  }, 2000);
-}
+
 
 // Export functions to window for global access
 window.updateUndoRedoButtons = updateUndoRedoButtons;

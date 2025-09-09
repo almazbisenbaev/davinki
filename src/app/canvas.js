@@ -1,4 +1,5 @@
 import { setActiveTool } from './tools.js';
+import { createTextInput } from './utils/dom.js';
 
 // Global state reference for canvas operations
 let appState;
@@ -377,48 +378,21 @@ function startTextEditing(textLayer) {
   appState.selectedLayerId = textLayer.id;
   
   // Create positioned input overlay for seamless text editing
-  createTextInput(textLayer);
+  const input = createTextInput(textLayer, (newText) => {
+    textLayer.text = newText;
+  }, render);
+  
+  // Set up completion handlers for the input
+  handleTextInputCompletion(textLayer, input);
   render();
 }
 
 /**
- * Create an overlay input element for direct text editing
- * Positions the input exactly over the text layer for seamless editing experience
+ * Handle text input completion and cleanup
+ * @param {Object} textLayer - The text layer being edited
+ * @param {HTMLElement} input - The input element to clean up
  */
-function createTextInput(textLayer) {
-  // Remove any existing text input to prevent conflicts
-  const existingInput = document.getElementById('textInput');
-  if (existingInput) {
-    existingInput.remove();
-  }
-
-  // Create styled input element that matches the text layer appearance
-  const input = document.createElement('input');
-  input.id = 'textInput';
-  input.type = 'text';
-  input.value = textLayer.text;
-  input.style.position = 'absolute';
-  input.style.left = textLayer.x + 'px';
-  input.style.top = textLayer.y + 'px';
-  input.style.fontSize = textLayer.fontSize + 'px';
-  input.style.fontFamily = textLayer.fontFamily;
-  input.style.color = textLayer.color;
-  input.style.background = 'transparent';
-  input.style.border = 'none';
-  input.style.outline = 'none'
-  input.style.zIndex = '1000'; // Ensure input appears above canvas
-
-  document.body.appendChild(input);
-  input.focus();
-  input.select(); // Select all text for easy replacement
-
-  // Update text layer content in real-time as user types
-  input.addEventListener('input', () => {
-    textLayer.text = input.value || 'Sample text';
-    render(); // Re-render to show updated text
-  });
-
-  // Finish editing on Enter key or when input loses focus
+function handleTextInputCompletion(textLayer, input) {
   const finishEditing = () => {
     // Save state after text editing for undo functionality
     appState.saveStateToHistory('Edit text');
