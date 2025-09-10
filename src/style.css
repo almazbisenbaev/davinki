@@ -287,53 +287,69 @@ body {
 }
 
 .toolbar {
-  background: #eee;
+  background: #66666688;
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  border-top: 1px solid #ffffff22;
+  border-bottom: 1px solid #00000022;
+
   padding: 8px;
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  border-bottom: 1px solid #ccc;
+
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  right: auto;
+  z-index: 1001;
 }
 
 .tool {
-  width: 40px;
-  height: 40px;
+  border: 1px solid #ffffff22;
+  border-radius: 10px;
+  background: #ffffff22;
+
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #ddd;
+  
   cursor: pointer;
   user-select: none;
+  transition: 0.2s;
 }
 
 .tool.active {
-  background: #ddd;
+  background: #fff;
   border-color: #999;
 }
 
 .toolbar-separator {
   width: 1px;
   height: 32px;
-  background: #ccc;
-  margin: 4px 8px;
+  background: #00000022;
 }
 
 .toolbar-btn {
+  border-radius: 10px;
+  background: #ffffff;
+
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #ddd;
+  
   cursor: pointer;
   user-select: none;
-  margin: 2px;
+  transition: 0.2s;
 }
 
 .toolbar-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #bbb;
+  background: white;
 }
 
 .toolbar-btn:disabled {
