@@ -1,7 +1,7 @@
 import { initCanvas, render, setUICallbacks } from './canvas.js';
 import { initTools, setActiveTool } from './tools.js';
 import { showUndoFeedback } from './utils/dom.js';
-import { CANVAS, COLORS, TIMING, TEXT, CROP_PRESETS } from './utils/constants.js';
+import { CANVAS, COLORS, TIMING, TEXT, CROP_PRESETS, ERASER } from './utils/constants.js';
 
 // Global reference to application state
 let appState;
@@ -1230,6 +1230,33 @@ function setupPropertiesPanel() {
            window.setCropAspectRatio(aspectRatioSelect.value);
          }
        });
+    } else if (appState.activeTool === 'eraser') {
+      // Show eraser tool properties
+      propertiesContent.innerHTML = `
+        <div class="property-group">
+          <label>Brush Size:</label>
+          <input type="range" id="eraserSizeSlider" min="${ERASER.MIN_BRUSH_SIZE}" max="${ERASER.MAX_BRUSH_SIZE}" value="${appState.eraserBrushSize}">
+          <span id="eraserSizeValue">${appState.eraserBrushSize}px</span>
+        </div>
+        <div class="property-group">
+          <label>Instructions:</label>
+          <div class="eraser-instructions">
+            <p>• Click and drag to erase pixels</p>
+            <p>• Only erases pixels on the selected layer</p>
+            <p>• Use square brush for precise control</p>
+          </div>
+        </div>
+      `;
+      
+      // Add event listener for brush size slider
+      const eraserSizeSlider = document.getElementById('eraserSizeSlider');
+      const eraserSizeValue = document.getElementById('eraserSizeValue');
+      
+      eraserSizeSlider.addEventListener('input', () => {
+        const newSize = parseInt(eraserSizeSlider.value);
+        eraserSizeValue.textContent = newSize + 'px';
+        appState.eraserBrushSize = newSize;
+      });
     } else if (appState.activeTool === 'text' || (selectedLayer && selectedLayer.type === 'text')) {
       // Show text properties
       const textLayer = selectedLayer && selectedLayer.type === 'text' ? selectedLayer : null;

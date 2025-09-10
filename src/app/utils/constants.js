@@ -86,3 +86,11 @@ export const LAYER = {
   MIN_OPACITY: 0.0,
   MAX_OPACITY: 1.0
 };
+
+// Eraser Tool Constants
+export const ERASER = {
+  DEFAULT_BRUSH_SIZE: 20,
+  MIN_BRUSH_SIZE: 1,
+  MAX_BRUSH_SIZE: 100,
+  BRUSH_SHAPE: 'square' // Currently only square supported
+};

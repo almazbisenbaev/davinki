@@ -1,5 +1,5 @@
 import { render } from './canvas.js';
-import { TEXT } from './utils/constants.js';
+import { TEXT, ERASER } from './utils/constants.js';
 
 // Global counter for generating unique layer IDs
 let nextLayerId = 1;
@@ -30,6 +30,10 @@ export function initAppState() {
     isDragging: false, // Whether user is currently dragging a layer
     dragStart: { x: 0, y: 0 }, // Initial mouse position when drag started
     dragLayerOffset: { x: 0, y: 0 }, // Offset from layer origin to mouse position
+
+    // Eraser tool state
+    isErasing: false, // Whether user is currently erasing
+    eraserBrushSize: ERASER.DEFAULT_BRUSH_SIZE, // Current eraser brush size
 
     // Undo/Redo system
     history: [], // Array of state snapshots for undo functionality

@@ -1,6 +1,6 @@
 import { setActiveTool } from './tools.js';
 import { createTextInput } from './utils/dom.js';
-import { CANVAS, COLORS } from './utils/constants.js';
+import { CANVAS, COLORS, ERASER } from './utils/constants.js';
 
 // Global state reference for canvas operations
 let appState;
@@ -50,7 +50,27 @@ export function render() {
       }
     } else if (layer.image) {
       // Image layer rendering - draw at layer position with original dimensions
-      ctx.drawImage(layer.image, layer.x, layer.y);
+      if (layer.eraserCanvas) {
+        // Apply eraser mask using a simpler approach
+        // Create a temporary canvas to combine image with eraser mask
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = layer.image.width;
+        tempCanvas.height = layer.image.height;
+        
+        // Draw the original image
+        tempCtx.drawImage(layer.image, 0, 0);
+        
+        // Use the eraser canvas as an alpha mask (destination-in keeps only where mask is opaque)
+        tempCtx.globalCompositeOperation = 'destination-in';
+        tempCtx.drawImage(layer.eraserCanvas, 0, 0);
+        
+        // Draw the masked result to the main canvas
+        ctx.drawImage(tempCanvas, layer.x, layer.y);
+      } else {
+        // No eraser applied, draw normally
+        ctx.drawImage(layer.image, layer.x, layer.y);
+      }
     } else {
       // For empty layers: transparent (no fill) or you can draw checkered bg
       // For now: do nothing (transparent)
@@ -105,6 +125,12 @@ function onMouseDown(e) {
     return;
   }
 
+  if (appState.activeTool === 'eraser') {
+    // Handle eraser tool - start erasing
+    handleEraserStart(mouseX, mouseY);
+    return;
+  }
+
   // Only handle drag operations for move tool
   if (appState.activeTool !== 'move') return;
 
@@ -139,11 +165,17 @@ function onMouseDown(e) {
  * Updates layer position with snapping and triggers re-render
  */
 function onMouseMove(e) {
-  if (!appState.isDragging) return;
-
   const rect = appState.canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
+
+  // Handle eraser tool drawing
+  if (appState.isErasing) {
+    handleEraserDraw(mouseX, mouseY);
+    return;
+  }
+
+  if (!appState.isDragging) return;
 
   const selectedLayer = appState.getSelectedLayer();
   if (!selectedLayer) return;
@@ -326,6 +358,17 @@ function drawSnapGuides() {
  * Handle mouse up events - ends drag operations and cleans up UI state
  */
 function onMouseUp() {
+  // If we were erasing, save the final state for undo functionality
+  if (appState.isErasing) {
+    appState.isErasing = false;
+    // Reset eraser position tracking
+    lastEraseX = null;
+    lastEraseY = null;
+    appState.markAsModified();
+    if (window.updateUndoRedoButtons) window.updateUndoRedoButtons();
+    return;
+  }
+
   // If we were dragging, save the final state for undo functionality
   if (appState.isDragging) {
     appState.markAsModified();
@@ -443,4 +486,124 @@ let updateLayersPanel, updatePropertiesPanel;
 export function setUICallbacks(layersCallback, propertiesCallback) {
   updateLayersPanel = layersCallback;
   updatePropertiesPanel = propertiesCallback;
+}
+
+// Store previous mouse position for interpolation
+let lastEraseX = null;
+let lastEraseY = null;
+
+/**
+ * Handle eraser tool start - begins erasing operation
+ * @param {number} mouseX - X coordinate of mouse position
+ * @param {number} mouseY - Y coordinate of mouse position
+ */
+function handleEraserStart(mouseX, mouseY) {
+  const selectedLayer = appState.getSelectedLayer();
+  if (!selectedLayer || !selectedLayer.image) {
+    return; // Can only erase on image layers
+  }
+
+  // Save state before starting erase operation for undo functionality
+  appState.saveStateToHistory('Erase pixels');
+  
+  appState.isErasing = true;
+  
+  // Initialize the eraser canvas if it doesn't exist
+  if (!selectedLayer.eraserCanvas) {
+    initializeEraserCanvas(selectedLayer);
+  }
+  
+  // Store the starting position
+  lastEraseX = mouseX;
+  lastEraseY = mouseY;
+  
+  // Start erasing at the initial position
+  eraseAtPosition(mouseX, mouseY, selectedLayer);
+}
+
+/**
+ * Handle eraser tool drawing - continues erasing while mouse moves
+ * @param {number} mouseX - X coordinate of mouse position
+ * @param {number} mouseY - Y coordinate of mouse position
+ */
+function handleEraserDraw(mouseX, mouseY) {
+  const selectedLayer = appState.getSelectedLayer();
+  if (!selectedLayer || !selectedLayer.image || !selectedLayer.eraserCanvas) {
+    return;
+  }
+  
+  // Interpolate between last position and current position to avoid gaps
+  if (lastEraseX !== null && lastEraseY !== null) {
+    const distance = Math.sqrt(Math.pow(mouseX - lastEraseX, 2) + Math.pow(mouseY - lastEraseY, 2));
+    const steps = Math.max(1, Math.floor(distance / (appState.eraserBrushSize / 4)));
+    
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const interpX = lastEraseX + (mouseX - lastEraseX) * t;
+      const interpY = lastEraseY + (mouseY - lastEraseY) * t;
+      eraseAtPosition(interpX, interpY, selectedLayer);
+    }
+  } else {
+    eraseAtPosition(mouseX, mouseY, selectedLayer);
+  }
+  
+  // Update last position
+  lastEraseX = mouseX;
+  lastEraseY = mouseY;
+}
+
+/**
+ * Initialize eraser canvas for a layer
+ * @param {Object} layer - The layer to initialize eraser canvas for
+ */
+function initializeEraserCanvas(layer) {
+  const eraserCanvas = document.createElement('canvas');
+  const eraserCtx = eraserCanvas.getContext('2d');
+  
+  eraserCanvas.width = layer.image.width;
+  eraserCanvas.height = layer.image.height;
+  
+  // Fill with white (fully opaque) - this represents non-erased areas
+  eraserCtx.fillStyle = 'white';
+  eraserCtx.fillRect(0, 0, eraserCanvas.width, eraserCanvas.height);
+  
+  layer.eraserCanvas = eraserCanvas;
+  layer.eraserCtx = eraserCtx;
+}
+
+/**
+ * Erase pixels at the specified position on the given layer
+ * @param {number} mouseX - X coordinate of mouse position
+ * @param {number} mouseY - Y coordinate of mouse position
+ * @param {Object} layer - The layer to erase on
+ */
+function eraseAtPosition(mouseX, mouseY, layer) {
+  // Calculate the position relative to the layer
+  const layerX = mouseX - layer.x;
+  const layerY = mouseY - layer.y;
+  
+  // Check if the position is within the layer bounds
+  if (layerX < 0 || layerY < 0 || layerX >= layer.image.width || layerY >= layer.image.height) {
+    return;
+  }
+  
+  // Set up eraser brush (square shape)
+  const brushSize = appState.eraserBrushSize;
+  const halfBrush = Math.floor(brushSize / 2);
+  
+  // Draw transparent square on eraser canvas (represents erased area)
+  // Use destination-out to punch holes in the white canvas
+  layer.eraserCtx.globalCompositeOperation = 'destination-out';
+  layer.eraserCtx.fillStyle = 'rgba(0, 0, 0, 1)';
+  layer.eraserCtx.fillRect(
+    layerX - halfBrush,
+    layerY - halfBrush,
+    brushSize,
+    brushSize
+  );
+  // Reset composite operation
+  layer.eraserCtx.globalCompositeOperation = 'source-over';
+  
+  // Re-render the canvas to show the changes
+  render();
 }
