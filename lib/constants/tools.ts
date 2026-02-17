@@ -1,0 +1,206 @@
+import {
+  FileText,
+  Scissors,
+  Combine,
+  ImageIcon,
+  FileType,
+  Minimize2,
+  RotateCw,
+  Droplet,
+  Lock,
+  Trash2,
+  GripVertical,
+  Hash,
+  PenTool,
+  Crop,
+  Layers,
+  EyeOff,
+  ScanSearch,
+  GitCompareArrows,
+  Palette,
+  LockOpen,
+  type LucideIcon,
+} from "lucide-react"
+
+export interface Tool {
+  name: string
+  description: string
+  icon: LucideIcon
+  href: string
+  badge?: string
+  category: "edit" | "organize" | "convert" | "secure"
+  comingSoon?: boolean
+}
+
+export const TOOLS: Tool[] = [
+  {
+    name: "PDF Editor",
+    description: "Edit text, add annotations, draw, and insert images",
+    icon: FileText,
+    href: "/editor",
+    badge: "Beta",
+    category: "edit",
+  },
+  {
+    name: "Split PDF",
+    description: "Split a PDF into separate pages or ranges",
+    icon: Scissors,
+    href: "/split",
+    category: "organize",
+  },
+  {
+    name: "Merge PDFs",
+    description: "Combine multiple PDF files into one document",
+    icon: Combine,
+    href: "/merge",
+    category: "organize",
+  },
+  {
+    name: "Compress PDF",
+    description: "Reduce PDF file size while maintaining quality",
+    icon: Minimize2,
+    href: "/compress",
+    badge: "Beta",
+    category: "convert",
+  },
+  {
+    name: "Rotate Pages",
+    description: "Rotate PDF pages to the correct orientation",
+    icon: RotateCw,
+    href: "/rotate",
+    badge: "Beta",
+    category: "organize",
+  },
+  {
+    name: "Extract Images",
+    description: "Extract all images from a PDF document",
+    icon: ImageIcon,
+    href: "/extract-images",
+    badge: "Beta",
+    category: "convert",
+  },
+  {
+    name: "Extract Text",
+    description: "Extract all text content from a PDF document",
+    icon: FileText,
+    href: "/extract-text",
+    badge: "Beta",
+    category: "convert",
+  },
+  {
+    name: "Add Watermark",
+    description: "Add text or image watermarks to your PDF",
+    icon: Droplet,
+    href: "/watermark",
+    badge: "Beta",
+    category: "edit",
+  },
+  {
+    name: "Protect PDF",
+    description: "Add password protection to secure your PDF",
+    icon: Lock,
+    href: "/protect",
+    badge: "Beta",
+    category: "secure",
+  },
+  {
+    name: "Convert PDF",
+    description: "Convert PDF pages to images (PNG, JPG)",
+    icon: FileType,
+    href: "/convert",
+    badge: "Beta",
+    category: "convert",
+  },
+  {
+    name: "Remove Pages",
+    description: "Delete specific pages from your PDF",
+    icon: Trash2,
+    href: "/remove-pages",
+    badge: "Beta",
+    category: "organize",
+  },
+  {
+    name: "Reorder Pages",
+    description: "Drag and drop to rearrange PDF pages",
+    icon: GripVertical,
+    href: "/reorder",
+    badge: "Beta",
+    category: "organize",
+  },
+  {
+    name: "Add Page Numbers",
+    description: "Add custom page numbers with various styles",
+    icon: Hash,
+    href: "/page-numbers",
+    badge: "Beta",
+    category: "edit",
+  },
+  {
+    name: "Add Signature",
+    description: "Draw or upload your signature to PDF",
+    icon: PenTool,
+    href: "/signature",
+    badge: "Beta",
+    category: "edit",
+  },
+]
+
+/** Upcoming tools that are not yet available */
+export const COMING_SOON_TOOLS: Tool[] = [
+  {
+    name: "Crop PDF",
+    description: "Trim margins and whitespace from PDF pages",
+    icon: Crop,
+    href: "#",
+    category: "edit",
+    comingSoon: true,
+  },
+  {
+    name: "Flatten PDF",
+    description: "Flatten form fields and annotations into static content",
+    icon: Layers,
+    href: "#",
+    category: "edit",
+    comingSoon: true,
+  },
+  {
+    name: "Redact PDF",
+    description: "Permanently black out sensitive information in documents",
+    icon: EyeOff,
+    href: "#",
+    category: "secure",
+    comingSoon: true,
+  },
+  {
+    name: "OCR PDF",
+    description: "Make scanned or image-based PDFs searchable with text recognition",
+    icon: ScanSearch,
+    href: "#",
+    category: "convert",
+    comingSoon: true,
+  },
+  {
+    name: "Compare PDFs",
+    description: "Visual side-by-side diff to spot changes between two documents",
+    icon: GitCompareArrows,
+    href: "#",
+    category: "organize",
+    comingSoon: true,
+  },
+  {
+    name: "Grayscale PDF",
+    description: "Convert color pages to black and white for printing",
+    icon: Palette,
+    href: "#",
+    category: "convert",
+    comingSoon: true,
+  },
+  {
+    name: "Unlock PDF",
+    description: "Remove password restrictions from protected PDF files",
+    icon: LockOpen,
+    href: "#",
+    category: "secure",
+    comingSoon: true,
+  },
+]
