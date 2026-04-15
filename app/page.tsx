@@ -23,7 +23,7 @@ export default function Home() {
     operatingSystem: "Web Browser",
     description: "Free online PDF tools for editing, converting, and managing PDF documents",
     featureList:
-      "PDF Editor, Split PDF, Merge PDFs, Compress PDF, Rotate Pages, Extract Images, Extract Text, Add Watermark, Protect PDF, Convert PDF, Remove Pages, Reorder Pages, Add Page Numbers",
+      "PDF Editor, Split PDF, Merge PDFs, Compress PDF, Rotate Pages, Extract Images, Extract Text, Add Watermark, Convert PDF, Remove Pages, Reorder Pages, Add Page Numbers",
   }
 
   const breadcrumbSchema = {
@@ -52,7 +52,7 @@ export default function Home() {
 
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="text-center mb-16">
               <h1 className="text-6xl md:text-7xl font-bold mb-6 text-balance">
                 <span className="bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                   Da Vinki PDF
@@ -70,21 +70,18 @@ export default function Home() {
                 description="Edit text, add annotations, draw, and insert images"
                 Icon={FileText}
                 badge="Beta"
-                delay={200}
               />
               <ToolCard
                 href="/split"
                 name="Split PDF"
                 description="Split a PDF into separate pages or ranges"
                 Icon={Scissors}
-                delay={250}
               />
               <ToolCard
                 href="/merge"
                 name="Merge PDFs"
                 description="Combine multiple PDF files into one document"
                 Icon={Combine}
-                delay={300}
               />
               <ToolCard
                 href="/compress"
@@ -92,7 +89,6 @@ export default function Home() {
                 description="Reduce PDF file size while maintaining quality"
                 Icon={Minimize2}
                 badge="Beta"
-                delay={350}
               />
               <ToolCard
                 href="/rotate"
@@ -100,7 +96,6 @@ export default function Home() {
                 description="Rotate PDF pages to the correct orientation"
                 Icon={RotateCw}
                 badge="Beta"
-                delay={400}
               />
               <ToolCard
                 href="/extract-images"
@@ -108,7 +103,6 @@ export default function Home() {
                 description="Extract all images from a PDF document"
                 Icon={ImageIcon}
                 badge="Beta"
-                delay={450}
               />
               <ToolCard
                 href="/extract-text"
@@ -116,7 +110,6 @@ export default function Home() {
                 description="Extract all text content from a PDF document"
                 Icon={FileText}
                 badge="Beta"
-                delay={500}
               />
               <ToolCard
                 href="/watermark"
@@ -124,15 +117,6 @@ export default function Home() {
                 description="Add text or image watermarks to your PDF"
                 Icon={Droplet}
                 badge="Beta"
-                delay={550}
-              />
-              <ToolCard
-                href="/protect"
-                name="Protect PDF"
-                description="Add password protection to secure your PDF"
-                Icon={Lock}
-                badge="Beta"
-                delay={600}
               />
               <ToolCard
                 href="/convert"
@@ -140,7 +124,6 @@ export default function Home() {
                 description="Convert PDF pages to images (PNG, JPG)"
                 Icon={FileType}
                 badge="Beta"
-                delay={650}
               />
               <ToolCard
                 href="/remove-pages"
@@ -148,7 +131,6 @@ export default function Home() {
                 description="Delete specific pages from your PDF"
                 Icon={Trash2}
                 badge="Beta"
-                delay={700}
               />
               <ToolCard
                 href="/reorder"
@@ -156,7 +138,6 @@ export default function Home() {
                 description="Drag and drop to rearrange PDF pages"
                 Icon={GripVertical}
                 badge="Beta"
-                delay={750}
               />
               <ToolCard
                 href="/page-numbers"
@@ -164,7 +145,6 @@ export default function Home() {
                 description="Add custom page numbers with various styles"
                 Icon={Hash}
                 badge="Beta"
-                delay={800}
               />
             </div>
             <div className="mt-20">
@@ -175,46 +155,44 @@ export default function Home() {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <ComingSoonToolCard
+                  name="Protect PDF"
+                  description="Add password protection to secure your PDF"
+                  Icon={Lock}
+                />
+                <ComingSoonToolCard
                   name="Crop PDF"
                   description="Trim margins and whitespace from PDF pages"
                   Icon={Crop}
-                  delay={600}
                 />
                 <ComingSoonToolCard
                   name="Flatten PDF"
                   description="Flatten form fields and annotations into static content"
                   Icon={Layers}
-                  delay={650}
                 />
                 <ComingSoonToolCard
                   name="Redact PDF"
                   description="Permanently black out sensitive information in documents"
                   Icon={EyeOff}
-                  delay={700}
                 />
                 <ComingSoonToolCard
                   name="OCR PDF"
                   description="Make scanned or image-based PDFs searchable with text recognition"
                   Icon={ScanSearch}
-                  delay={750}
                 />
                 <ComingSoonToolCard
                   name="Compare PDFs"
                   description="Visual side-by-side diff to spot changes between two documents"
                   Icon={GitCompareArrows}
-                  delay={800}
                 />
                 <ComingSoonToolCard
                   name="Grayscale PDF"
                   description="Convert color pages to black and white for printing"
                   Icon={Palette}
-                  delay={850}
                 />
                 <ComingSoonToolCard
                   name="Unlock PDF"
                   description="Remove password restrictions from protected PDF files"
                   Icon={LockOpen}
-                  delay={900}
                 />
               </div>
             </div>
@@ -231,13 +209,12 @@ type ToolCardProps = {
   description: string
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   badge?: string
-  delay: number
 }
 
-function ToolCard({ href, name, description, Icon, badge, delay }: ToolCardProps) {
+function ToolCard({ href, name, description, Icon, badge }: ToolCardProps) {
 
   return (
-    <Link href={href} className="group animate-in fade-in slide-in-from-bottom-8 duration-700 block" style={{ animationDelay: `${delay}ms` }}>
+    <Link href={href} className="group block">
       <Card className="h-full glass-strong border-2 transition-all duration-300 hover:border-primary/50 cursor-pointer overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -273,16 +250,12 @@ type ComingSoonToolCardProps = {
   name: string
   description: string
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  delay: number
 }
 
-function ComingSoonToolCard({ name, description, Icon, delay }: ComingSoonToolCardProps) {
+function ComingSoonToolCard({ name, description, Icon }: ComingSoonToolCardProps) {
 
   return (
-    <div
-      className="animate-in fade-in slide-in-from-bottom-8 duration-700"
-      style={{ animationDelay: `${delay}ms` }}
-    >
+    <div>
       <Card className="h-full border-2 border-dashed border-border/60 bg-muted/30 overflow-hidden relative">
         <CardHeader>
           <div className="flex items-start gap-4">

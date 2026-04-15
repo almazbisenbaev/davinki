@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -77,10 +78,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Add your verification codes here when available
-    // google: "your-google-verification-code",
-    // yandex: "your-yandex-verification-code",
-    // bing: "your-bing-verification-code",
+    google: "cfuRApAKvRomU8FRnyOL2giMwdwF-q1WMg1l7Q-W1og",
   },
 }
 
@@ -94,6 +92,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <Header />
         {children}
+        <Footer />
         <Analytics />
       </body>
     </html>

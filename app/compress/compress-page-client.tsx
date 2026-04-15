@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { Minimize2 } from "lucide-react"
 import { ToolLayout } from "@/components/tools/tool-layout"
 
 const CompressPDF = dynamic(
@@ -13,7 +14,11 @@ const CompressPDF = dynamic(
 
 export default function CompressPageClient() {
   return (
-    <ToolLayout title="Compress PDF" description="Reduce PDF file size while maintaining quality">
+    <ToolLayout
+      title="Compress PDF"
+      description="Reduce PDF file size while maintaining quality"
+      icon={<Minimize2 className="h-5 w-5 text-primary" />}
+    >
       <CompressPDF />
     </ToolLayout>
   )

@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, Download, Loader2 } from "lucide-react"
+import { Upload, Download, Loader2, ImageIcon } from "lucide-react"
 import { ToolLayout } from "./tool-layout"
 import { pdfjsLib } from "@/lib/pdf-worker"
 
@@ -135,7 +135,7 @@ export function ExtractImages() {
   }
 
   return (
-    <ToolLayout title="Extract Images" description="Extract all images from a PDF document">
+    <ToolLayout title="Extract Images" description="Extract all images from a PDF document" icon={<ImageIcon className="h-5 w-5 text-primary" />}>
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>

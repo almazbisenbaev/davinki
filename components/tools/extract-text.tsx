@@ -72,7 +72,7 @@ export function ExtractText() {
   }
 
   return (
-    <ToolLayout title="Extract Text" description="Extract all text content from a PDF document">
+    <ToolLayout title="Extract Text" description="Extract all text content from a PDF document" icon={<FileText className="h-5 w-5 text-primary" />}>
       <div className="max-w-4xl mx-auto space-y-6">
         <Card className="glass-strong border-2">
           <CardHeader>

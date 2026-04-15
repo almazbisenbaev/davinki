@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { Droplet } from "lucide-react"
 import { ToolLayout } from "@/components/tools/tool-layout"
 
 const WatermarkPDF = dynamic(
@@ -13,7 +14,11 @@ const WatermarkPDF = dynamic(
 
 export default function WatermarkPageClient() {
   return (
-    <ToolLayout title="Add Watermark" description="Add text or image watermarks to your PDF">
+    <ToolLayout
+      title="Add Watermark"
+      description="Add text or image watermarks to your PDF"
+      icon={<Droplet className="h-5 w-5 text-primary" />}
+    >
       <WatermarkPDF />
     </ToolLayout>
   )

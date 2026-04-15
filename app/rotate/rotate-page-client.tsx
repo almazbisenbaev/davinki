@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { RotateCw } from "lucide-react"
 import { ToolLayout } from "@/components/tools/tool-layout"
 
 const RotatePDF = dynamic(() => import("@/components/tools/rotate-pdf").then((mod) => ({ default: mod.RotatePDF })), {
@@ -10,7 +11,11 @@ const RotatePDF = dynamic(() => import("@/components/tools/rotate-pdf").then((mo
 
 export default function RotatePageClient() {
   return (
-    <ToolLayout title="Rotate Pages" description="Rotate PDF pages to the correct orientation">
+    <ToolLayout
+      title="Rotate Pages"
+      description="Rotate PDF pages to the correct orientation"
+      icon={<RotateCw className="h-5 w-5 text-primary" />}
+    >
       <RotatePDF />
     </ToolLayout>
   )
