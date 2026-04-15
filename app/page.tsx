@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, FileText, Scissors, Combine, Minimize2, RotateCw, ImageIcon, Droplet, Lock, FileType, Trash2, GripVertical, Hash, PenTool, Crop, Layers, EyeOff, ScanSearch, GitCompareArrows, Palette, LockOpen } from "lucide-react"
+import { ArrowRight, FileText, Scissors, Combine, Minimize2, RotateCw, ImageIcon, Droplet, Lock, FileType, Trash2, GripVertical, Hash, Crop, Layers, EyeOff, ScanSearch, GitCompareArrows, Palette, LockOpen } from "lucide-react"
 import { JsonLd } from "@/components/seo/json-ld"
 
 export default function Home() {
@@ -23,7 +23,7 @@ export default function Home() {
     operatingSystem: "Web Browser",
     description: "Free online PDF tools for editing, converting, and managing PDF documents",
     featureList:
-      "PDF Editor, Split PDF, Merge PDFs, Compress PDF, Rotate Pages, Extract Images, Extract Text, Add Watermark, Protect PDF, Convert PDF, Remove Pages, Reorder Pages, Add Page Numbers, Add Signature",
+      "PDF Editor, Split PDF, Merge PDFs, Compress PDF, Rotate Pages, Extract Images, Extract Text, Add Watermark, Protect PDF, Convert PDF, Remove Pages, Reorder Pages, Add Page Numbers",
   }
 
   const breadcrumbSchema = {
@@ -165,14 +165,6 @@ export default function Home() {
                 Icon={Hash}
                 badge="Beta"
                 delay={800}
-              />
-              <ToolCard
-                href="/signature"
-                name="Add Signature"
-                description="Draw or upload your signature to PDF"
-                Icon={PenTool}
-                badge="Beta"
-                delay={850}
               />
             </div>
             <div className="mt-20">

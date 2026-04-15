@@ -1,6 +1,6 @@
 # Da Vinki PDF
 
-A comprehensive online PDF toolkit built with Next.js 16, featuring 14 powerful tools for editing, converting, and managing PDF documents entirely in the browser.
+A comprehensive online PDF toolkit built with Next.js 16, featuring 13 powerful tools for editing, converting, and managing PDF documents entirely in the browser.
 
 ## Features
 
@@ -8,7 +8,6 @@ A comprehensive online PDF toolkit built with Next.js 16, featuring 14 powerful 
 - **PDF Editor**: Edit text, add annotations, draw, and insert images
 - **Add Watermark**: Add text or image watermarks
 - **Add Page Numbers**: Customize page numbering with various styles
-- **Add Signature**: Draw or upload signatures
 
 ### Organize Tools
 - **Split PDF**: Split documents into separate pages or ranges
