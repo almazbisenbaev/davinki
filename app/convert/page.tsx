@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { FileType } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import ConvertPageClient from "./convert-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function ConvertPage() {
-  return <ConvertPageClient />
+  return (
+    <ToolLayout
+      title="Convert PDF"
+      description="Convert PDF pages to images (PNG, JPG)"
+      icon={<FileType className="h-5 w-5 text-primary" />}
+    >
+      <ConvertPageClient />
+    </ToolLayout>
+  )
 }

@@ -4,8 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, Download, Loader2, X, GripVertical, FileText, Plus, Combine } from "lucide-react"
-import { ToolLayout } from "./tool-layout"
+import { Upload, Download, Loader2, X, GripVertical, FileText, Plus } from "lucide-react"
 import { PDFDocument } from "pdf-lib"
 import { DownloadModal } from "@/components/download-modal"
 import { PDFPreview } from "@/components/pdf-preview"
@@ -181,8 +180,7 @@ export function MergePDF() {
   }
 
   return (
-    <ToolLayout title="Merge PDFs" description="Combine multiple PDF files into one" icon={<Combine className="h-5 w-5 text-primary" />}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <Card className="glass-strong border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -328,6 +326,5 @@ export function MergePDF() {
         fileName="merged.pdf"
         description="Your merged PDF is ready to download"
       />
-    </ToolLayout>
-  )
+    )
 }

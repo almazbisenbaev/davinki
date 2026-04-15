@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { Hash } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import PageNumbersPageClient from "./page-numbers-page-client"
 
 export const metadata: Metadata = {
@@ -12,5 +14,13 @@ export const metadata: Metadata = {
 }
 
 export default function PageNumbersPage() {
-  return <PageNumbersPageClient />
+  return (
+    <ToolLayout
+      title="Add Page Numbers"
+      description="Add custom page numbers to your PDF with various styles and positions"
+      icon={<Hash className="h-5 w-5 text-primary" />}
+    >
+      <PageNumbersPageClient />
+    </ToolLayout>
+  )
 }

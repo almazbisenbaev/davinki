@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { Trash2 } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import RemovePagesPageClient from "./remove-pages-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function RemovePagesPage() {
-  return <RemovePagesPageClient />
+  return (
+    <ToolLayout
+      title="Remove Pages"
+      description="Delete specific pages from your PDF document"
+      icon={<Trash2 className="h-5 w-5 text-primary" />}
+    >
+      <RemovePagesPageClient />
+    </ToolLayout>
+  )
 }

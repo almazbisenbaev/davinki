@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { Lock } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import ProtectPageClient from "./protect-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function ProtectPage() {
-  return <ProtectPageClient />
+  return (
+    <ToolLayout
+      title="Protect PDF"
+      description="Add password protection to secure your PDF"
+      icon={<Lock className="h-5 w-5 text-primary" />}
+    >
+      <ProtectPageClient />
+    </ToolLayout>
+  )
 }

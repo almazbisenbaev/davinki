@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { Droplet } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import WatermarkPageClient from "./watermark-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function WatermarkPage() {
-  return <WatermarkPageClient />
+  return (
+    <ToolLayout
+      title="Add Watermark"
+      description="Add text or image watermarks to your PDF"
+      icon={<Droplet className="h-5 w-5 text-primary" />}
+    >
+      <WatermarkPageClient />
+    </ToolLayout>
+  )
 }

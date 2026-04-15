@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { ImageIcon } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import ExtractImagesPageClient from "./extract-images-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function ExtractImagesPage() {
-  return <ExtractImagesPageClient />
+  return (
+    <ToolLayout
+      title="Extract Images"
+      description="Extract all images from a PDF document"
+      icon={<ImageIcon className="h-5 w-5 text-primary" />}
+    >
+      <ExtractImagesPageClient />
+    </ToolLayout>
+  )
 }

@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Upload, Download, Loader2, FileText, Check, Scissors } from "lucide-react"
-import { ToolLayout } from "./tool-layout"
+import { Upload, Download, Loader2, FileText, Check } from "lucide-react"
 import { PDFDocument } from "pdf-lib"
 import { pdfjsLib } from "@/lib/pdf-worker"
 import { PDFPreview } from "@/components/pdf-preview"
@@ -131,8 +130,7 @@ export function SplitPDF() {
   }
 
   return (
-    <ToolLayout title="Split PDF" description="Split your PDF into separate files" icon={<Scissors className="h-5 w-5 text-primary" />}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <Card className="glass-strong border-2 overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -292,6 +290,5 @@ export function SplitPDF() {
         )}
       </div>
 
-    </ToolLayout>
-  )
+    )
 }

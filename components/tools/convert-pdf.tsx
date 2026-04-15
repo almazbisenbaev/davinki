@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
 import { Upload, Download, Loader2, FileType } from "lucide-react"
-import { ToolLayout } from "./tool-layout"
 import { pdfjsLib } from "@/lib/pdf-worker"
 
 type ImageFormat = "png" | "jpg"
@@ -70,8 +69,7 @@ export function ConvertPDF() {
   }
 
   return (
-    <ToolLayout title="Convert PDF" description="Convert PDF pages to images" icon={<FileType className="h-5 w-5 text-primary" />}>
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Upload PDF</CardTitle>
@@ -140,6 +138,5 @@ export function ConvertPDF() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
-  )
+    )
 }

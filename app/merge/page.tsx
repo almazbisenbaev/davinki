@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { Combine } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import MergePageClient from "./merge-page-client"
 
 export const metadata: Metadata = {
@@ -12,5 +14,13 @@ export const metadata: Metadata = {
 }
 
 export default function MergePage() {
-  return <MergePageClient />
+  return (
+    <ToolLayout
+      title="Merge PDFs"
+      description="Combine multiple PDF files into one"
+      icon={<Combine className="h-5 w-5 text-primary" />}
+    >
+      <MergePageClient />
+    </ToolLayout>
+  )
 }

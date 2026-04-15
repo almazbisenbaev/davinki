@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { FileText } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import ExtractTextPageClient from "./extract-text-page-client"
 
 export const metadata: Metadata = {
@@ -11,5 +13,13 @@ export const metadata: Metadata = {
 }
 
 export default function ExtractTextPage() {
-  return <ExtractTextPageClient />
+  return (
+    <ToolLayout
+      title="Extract Text"
+      description="Extract all text content from a PDF document"
+      icon={<FileText className="h-5 w-5 text-primary" />}
+    >
+      <ExtractTextPageClient />
+    </ToolLayout>
+  )
 }

@@ -39,13 +39,13 @@ export default function ContactPage() {
   return (
     <main className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance text-foreground">
               Contact Us
             </h1>
@@ -60,8 +60,7 @@ export default function ContactPage() {
               return (
                 <Card
                   key={channel.title}
-                  className="glass-strong border-2 animate-in fade-in slide-in-from-bottom-8 duration-700"
-                  style={{ animationDelay: `${index * 80 + 100}ms` }}
+                  className="glass-strong border-2"
                 >
                   <CardContent className="p-6 md:p-8">
                     <div className="flex items-start gap-5">

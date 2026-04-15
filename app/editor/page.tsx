@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { FileText } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import EditorPageClient from "./editor-page-client"
 
 export const metadata: Metadata = {
@@ -12,5 +14,14 @@ export const metadata: Metadata = {
 }
 
 export default function EditorPage() {
-  return <EditorPageClient />
+  return (
+    <ToolLayout
+      title="PDF Editor"
+      description="Edit text, add annotations, draw, and insert images"
+      icon={<FileText className="h-5 w-5 text-primary" />}
+      fullBleed
+    >
+      <EditorPageClient />
+    </ToolLayout>
+  )
 }

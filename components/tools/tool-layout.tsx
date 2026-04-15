@@ -8,9 +8,10 @@ interface ToolLayoutProps {
   description: string
   icon: React.ReactNode
   children: React.ReactNode
+  fullBleed?: boolean
 }
 
-export function ToolLayout({ title, description, icon, children }: ToolLayoutProps) {
+export function ToolLayout({ title, description, icon, children, fullBleed = false }: ToolLayoutProps) {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-background via-background to-primary/5">
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
@@ -31,9 +32,11 @@ export function ToolLayout({ title, description, icon, children }: ToolLayoutPro
           </div>
         </div>
       </div>
-      <div className="container mx-auto px-4 py-8">
-        {children}
-      </div>
+      {fullBleed ? children : (
+        <div className="container mx-auto px-4 py-8">
+          {children}
+        </div>
+      )}
     </div>
   )
 }

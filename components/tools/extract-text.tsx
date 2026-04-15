@@ -5,7 +5,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Download, Copy, Check, Loader2, FileText } from "lucide-react"
-import { ToolLayout } from "./tool-layout"
 import { pdfjsLib } from "@/lib/pdf-worker"
 
 export function ExtractText() {
@@ -72,8 +71,7 @@ export function ExtractText() {
   }
 
   return (
-    <ToolLayout title="Extract Text" description="Extract all text content from a PDF document" icon={<FileText className="h-5 w-5 text-primary" />}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <Card className="glass-strong border-2">
           <CardHeader>
             <CardTitle>Upload PDF</CardTitle>
@@ -170,6 +168,5 @@ export function ExtractText() {
           </Card>
         )}
       </div>
-    </ToolLayout>
-  )
+    )
 }

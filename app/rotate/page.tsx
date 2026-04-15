@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { RotateCw } from "lucide-react"
+import { ToolLayout } from "@/components/tools/tool-layout"
 import RotatePageClient from "./rotate-page-client"
 
 export const metadata: Metadata = {
@@ -12,5 +14,13 @@ export const metadata: Metadata = {
 }
 
 export default function RotatePage() {
-  return <RotatePageClient />
+  return (
+    <ToolLayout
+      title="Rotate Pages"
+      description="Rotate PDF pages to the correct orientation"
+      icon={<RotateCw className="h-5 w-5 text-primary" />}
+    >
+      <RotatePageClient />
+    </ToolLayout>
+  )
 }
