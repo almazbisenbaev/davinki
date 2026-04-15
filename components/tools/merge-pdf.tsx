@@ -180,6 +180,7 @@ export function MergePDF() {
   }
 
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-6">
         <Card className="glass-strong border-2">
           <CardHeader>
@@ -326,5 +327,6 @@ export function MergePDF() {
         fileName="merged.pdf"
         description="Your merged PDF is ready to download"
       />
-    )
+    </>
+  )
 }
