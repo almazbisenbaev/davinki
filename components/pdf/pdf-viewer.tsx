@@ -9,19 +9,16 @@ import type {
   DrawingAnnotation,
   ImageAnnotation,
   Point,
-  ExtractedTextItem,
-  TextEdit,
 } from "@/lib/pdf-types"
 import { TextAnnotationComponent } from "./text-annotation"
 import { ImageAnnotationComponent } from "./image-annotation"
-import { TextEditOverlay } from "./text-edit-overlay"
 import { v4 as uuidv4 } from "uuid"
 
 interface PDFViewerProps {
   pdfData: ArrayBuffer
   currentPage: number
   zoom: number
-  tool: "select" | "text" | "draw" | "highlight" | "image" | "edit"
+  tool: "select" | "text" | "draw" | "highlight" | "image"
   textColor: string
   fontSize: number
   fontFamily: string
@@ -33,7 +30,6 @@ interface PDFViewerProps {
   textAnnotations: TextAnnotation[]
   drawingAnnotations: DrawingAnnotation[]
   imageAnnotations: ImageAnnotation[]
-  textEdits: TextEdit[]
   onAddTextAnnotation: (annotation: TextAnnotation) => void
   onUpdateTextAnnotation: (id: string, updates: Partial<TextAnnotation>) => void
   onDeleteTextAnnotation: (id: string) => void
@@ -41,8 +37,6 @@ interface PDFViewerProps {
   onAddImageAnnotation: (annotation: ImageAnnotation) => void
   onUpdateImageAnnotation: (id: string, updates: Partial<ImageAnnotation>) => void
   onDeleteImageAnnotation: (id: string) => void
-  onAddTextEdit: (edit: TextEdit) => void
-  onUpdateTextEdit: (id: string, updates: Partial<TextEdit>) => void
   onPageChange: (page: number) => void
   totalPages: number
 }
@@ -63,7 +57,6 @@ export function PDFViewer({
   textAnnotations,
   drawingAnnotations,
   imageAnnotations,
-  textEdits,
   onAddTextAnnotation,
   onUpdateTextAnnotation,
   onDeleteTextAnnotation,
@@ -71,8 +64,6 @@ export function PDFViewer({
   onAddImageAnnotation,
   onUpdateImageAnnotation,
   onDeleteImageAnnotation,
-  onAddTextEdit,
-  onUpdateTextEdit,
   onPageChange,
   totalPages,
 }: PDFViewerProps) {
@@ -84,69 +75,63 @@ export function PDFViewer({
   const [currentPath, setCurrentPath] = useState<Point[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingImagePosition, setPendingImagePosition] = useState<{ x: number; y: number } | null>(null)
-  const [extractedText, setExtractedText] = useState<ExtractedTextItem[]>([])
-  const [pageInfo, setPageInfo] = useState<{ pdfWidth: number; pdfHeight: number }>({ pdfWidth: 0, pdfHeight: 0 })
 
   const scale = zoom * 1.5
 
+  const renderTaskRef = useRef<any>(null)
+
   useEffect(() => {
+    let cancelled = false
+    const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) })
+
     const renderPage = async () => {
       if (!canvasRef.current) return
 
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) })
-      const pdf = await loadingTask.promise
-      const page = await pdf.getPage(currentPage)
+      try {
+        const pdf = await loadingTask.promise
+        if (cancelled) return
 
-      const viewport = page.getViewport({ scale })
-      const originalViewport = page.getViewport({ scale: 1 })
+        const page = await pdf.getPage(currentPage)
+        if (cancelled) return
 
-      const canvas = canvasRef.current
-      const context = canvas.getContext("2d")
+        const viewport = page.getViewport({ scale })
+        const canvas = canvasRef.current
+        const context = canvas.getContext("2d")
 
-      if (context) {
-        canvas.width = viewport.width
-        canvas.height = viewport.height
-        setDimensions({ width: viewport.width, height: viewport.height })
-        setPageInfo({ pdfWidth: originalViewport.width, pdfHeight: originalViewport.height })
-
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise
-
-        const textContent = await page.getTextContent()
-        const textItems: ExtractedTextItem[] = []
-
-        for (const item of textContent.items) {
-          if ("str" in item && item.str.trim()) {
-            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform)
-            const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3])
-
-            const originalTx = pdfjsLib.Util.transform(originalViewport.transform, item.transform)
-            const originalFontHeight = Math.sqrt(originalTx[2] * originalTx[2] + originalTx[3] * originalTx[3])
-
-            textItems.push({
-              id: `text-${currentPage}-${textItems.length}`,
-              page: currentPage,
-              text: item.str,
-              x: tx[4],
-              y: tx[5] - fontHeight,
-              width: item.width * viewport.scale,
-              height: fontHeight,
-              fontSize: fontHeight,
-              fontName: item.fontName || "Helvetica",
-              pdfX: originalTx[4],
-              pdfY: originalTx[5],
-              pdfWidth: item.width,
-              pdfHeight: originalFontHeight,
-            })
+        if (context) {
+          // Cancel any in-progress render on this canvas
+          if (renderTaskRef.current) {
+            renderTaskRef.current.cancel()
+            renderTaskRef.current = null
           }
+
+          canvas.width = viewport.width
+          canvas.height = viewport.height
+          setDimensions({ width: viewport.width, height: viewport.height })
+
+          const renderTask = page.render({ canvasContext: context, viewport })
+          renderTaskRef.current = renderTask
+
+          await renderTask.promise
+          renderTaskRef.current = null
         }
-        setExtractedText(textItems)
+      } catch (err: any) {
+        // RenderingCancelledException is expected when we cancel — ignore it
+        if (err?.name !== "RenderingCancelledException") {
+          console.error("PDF render error:", err)
+        }
       }
     }
 
     renderPage()
+
+    return () => {
+      cancelled = true
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel()
+        renderTaskRef.current = null
+      }
+    }
   }, [pdfData, currentPage, zoom, scale])
 
   useEffect(() => {
@@ -348,8 +333,6 @@ export function PDFViewer({
 
   const pageTextAnnotations = textAnnotations.filter((a) => a.page === currentPage)
   const pageImageAnnotations = imageAnnotations.filter((a) => a.page === currentPage)
-  const pageExtractedText = extractedText.filter((t) => t.page === currentPage)
-  const pageTextEdits = textEdits.filter((e) => e.page === currentPage)
 
   return (
     <div ref={containerRef} className="flex-1 overflow-auto bg-muted/50 p-8" onWheel={handleScroll}>
@@ -365,26 +348,13 @@ export function PDFViewer({
               ? "cursor-crosshair"
               : tool === "text" || tool === "image"
                 ? "cursor-cell"
-                : tool === "edit"
-                  ? "cursor-text"
-                  : "cursor-default"
+                : "cursor-default"
           }`}
           onClick={handleCanvasClick}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-        />
-        <TextEditOverlay
-          textItems={pageExtractedText}
-          textEdits={pageTextEdits}
-          isActive={tool === "edit"}
-          onEditText={onAddTextEdit}
-          onUpdateEdit={onUpdateTextEdit}
-          fontFamily={fontFamily}
-          bold={bold}
-          italic={italic}
-          underline={underline}
         />
         {pageTextAnnotations.map((annotation) => (
           <TextAnnotationComponent

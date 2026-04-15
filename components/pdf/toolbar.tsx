@@ -9,7 +9,6 @@ import {
   Highlighter,
   MousePointer,
   ImageIcon,
-  Edit3,
   Bold,
   Italic,
   Underline,
@@ -22,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { TextAnnotation, DrawingAnnotation, ImageAnnotation, TextEdit } from "@/lib/pdf-types"
+import type { TextAnnotation, DrawingAnnotation, ImageAnnotation } from "@/lib/pdf-types"
 import { downloadPDF } from "@/lib/pdf-utils"
 import { DownloadModal } from "@/components/download-modal"
 import { useState } from "react"
@@ -43,7 +42,7 @@ interface ToolbarProps {
   currentPage: number
   totalPages: number
   zoom: number
-  tool: "select" | "text" | "draw" | "highlight" | "image" | "edit"
+  tool: "select" | "text" | "draw" | "highlight" | "image"
   textColor: string
   fontSize: number
   fontFamily: string
@@ -53,7 +52,7 @@ interface ToolbarProps {
   drawColor: string
   strokeWidth: number
   onZoomChange: (zoom: number) => void
-  onToolChange: (tool: "select" | "text" | "draw" | "highlight" | "image" | "edit") => void
+  onToolChange: (tool: "select" | "text" | "draw" | "highlight" | "image") => void
   onTextColorChange: (color: string) => void
   onFontSizeChange: (size: number) => void
   onFontFamilyChange: (family: string) => void
@@ -67,7 +66,6 @@ interface ToolbarProps {
   textAnnotations: TextAnnotation[]
   drawingAnnotations: DrawingAnnotation[]
   imageAnnotations: ImageAnnotation[]
-  textEdits: TextEdit[]
 }
 
 export function Toolbar({
@@ -99,12 +97,11 @@ export function Toolbar({
   textAnnotations,
   drawingAnnotations,
   imageAnnotations,
-  textEdits,
 }: ToolbarProps) {
   const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleDownload = async () => {
-    await downloadPDF(pdfData, textAnnotations, drawingAnnotations, imageAnnotations, textEdits, fileName)
+    await downloadPDF(pdfData, textAnnotations, drawingAnnotations, imageAnnotations, [], fileName)
   }
 
   const handleZoomIn = () => {
@@ -140,83 +137,6 @@ export function Toolbar({
             </TooltipTrigger>
             <TooltipContent>Select</TooltipContent>
           </Tooltip>
-
-          <Popover>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={tool === "edit" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => onToolChange("edit")}
-                  >
-                    <Edit3 className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Edit Text</TooltipContent>
-            </Tooltip>
-            <PopoverContent className="w-72" align="center">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Font Family</Label>
-                  <Select value={fontFamily} onValueChange={onFontFamilyChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FONT_OPTIONS.map((font) => (
-                        <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                          {font.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Text Style</Label>
-                  <div className="flex gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={bold ? "secondary" : "outline"}
-                          size="icon"
-                          onClick={() => onBoldChange(!bold)}
-                        >
-                          <Bold className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Bold</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={italic ? "secondary" : "outline"}
-                          size="icon"
-                          onClick={() => onItalicChange(!italic)}
-                        >
-                          <Italic className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Italic</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={underline ? "secondary" : "outline"}
-                          size="icon"
-                          onClick={() => onUnderlineChange(!underline)}
-                        >
-                          <Underline className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Underline</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
 
           <Popover>
             <Tooltip>
