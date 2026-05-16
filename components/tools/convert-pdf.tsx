@@ -40,9 +40,21 @@ export function ConvertPDF() {
       const arrayBuffer = await file.arrayBuffer()
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
+      // Max canvas dimension to prevent empty images on large PDFs
+      // Most browsers have a limit around 16k, but 8k is safer and more performant
+      const MAX_CANVAS_DIMENSION = 8192
+
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum)
-        const viewport = page.getViewport({ scale: scale[0] })
+        let currentScale = scale[0]
+        let viewport = page.getViewport({ scale: currentScale })
+
+        // Check if viewport exceeds max dimensions and scale down if necessary
+        if (viewport.width > MAX_CANVAS_DIMENSION || viewport.height > MAX_CANVAS_DIMENSION) {
+          const ratio = Math.min(MAX_CANVAS_DIMENSION / viewport.width, MAX_CANVAS_DIMENSION / viewport.height)
+          currentScale *= ratio
+          viewport = page.getViewport({ scale: currentScale })
+        }
 
         const canvas = document.createElement("canvas")
         const context = canvas.getContext("2d")
@@ -50,14 +62,27 @@ export function ConvertPDF() {
         canvas.width = viewport.width
 
         if (context) {
+          // @ts-ignore - Some versions of pdfjs-dist have conflicting types for render
           await page.render({ canvasContext: context, viewport }).promise
 
-          const dataUrl = canvas.toDataURL(`image/${format}`, format === "jpg" ? quality[0] / 100 : undefined)
+          // Use toBlob for better performance and to ensure OS generates thumbnails correctly
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(
+              (b) => resolve(b),
+              `image/${format}`,
+              format === "jpg" ? quality[0] / 100 : undefined,
+            )
+          })
 
-          const link = document.createElement("a")
-          link.href = dataUrl
-          link.download = `${file.name.replace(".pdf", "")}_page_${pageNum}.${format}`
-          link.click()
+          if (blob) {
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement("a")
+            link.href = url
+            link.download = `${file.name.replace(".pdf", "")}_page_${pageNum}.${format}`
+            link.click()
+            // Clean up the URL after a small delay to ensure download starts
+            setTimeout(() => URL.revokeObjectURL(url), 100)
+          }
         }
       }
     } catch (error) {

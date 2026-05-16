@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Download, Loader2, ImageIcon } from "lucide-react"
@@ -12,6 +12,17 @@ export function ExtractImages() {
   const [file, setFile] = useState<File | null>(null)
   const [processing, setProcessing] = useState(false)
   const [images, setImages] = useState<string[]>([])
+
+  // Clean up blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      images.forEach((url) => {
+        if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url)
+        }
+      })
+    }
+  }, [images])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -53,49 +64,81 @@ export function ExtractImages() {
         console.log(`Page ${pageNum} operator list length:`, operatorList.fnArray.length)
         const imagePromises: Promise<void>[] = []
 
-        const processImage = (image: any) => {
+        const processImage = async (image: any) => {
           console.log("Processing image:", image?.width, "x", image?.height, "hasData:", !!image?.data, "hasBitmap:", !!image?.bitmap)
           if (image && image.width && image.height) {
             try {
+              // Max canvas dimension to prevent empty images
+              const MAX_CANVAS_DIMENSION = 8192
+              let width = image.width
+              let height = image.height
+
+              if (width > MAX_CANVAS_DIMENSION || height > MAX_CANVAS_DIMENSION) {
+                const ratio = Math.min(MAX_CANVAS_DIMENSION / width, MAX_CANVAS_DIMENSION / height)
+                width = Math.floor(width * ratio)
+                height = Math.floor(height * ratio)
+              }
+
               const imgCanvas = document.createElement("canvas")
-              imgCanvas.width = image.width
-              imgCanvas.height = image.height
+              imgCanvas.width = width
+              imgCanvas.height = height
               const imgCtx = imgCanvas.getContext("2d")
 
               if (imgCtx) {
                 if (image.bitmap) {
-                  imgCtx.drawImage(image.bitmap, 0, 0)
-                  const dataUrl = imgCanvas.toDataURL("image/png")
-                  extractedImages.push(dataUrl)
+                  imgCtx.drawImage(image.bitmap, 0, 0, width, height)
+                  const blob = await new Promise<Blob | null>((resolve) => imgCanvas.toBlob(resolve, "image/png"))
+                  if (blob) {
+                    const url = URL.createObjectURL(blob)
+                    extractedImages.push(url)
+                  }
                   console.log("Successfully extracted image from bitmap, total now:", extractedImages.length)
                 } else if (image.data) {
-                  const imageData = imgCtx.createImageData(image.width, image.height)
+                  // If we scaled down, we need to use a temporary canvas to draw the original data first
+                  const tempCanvas = document.createElement("canvas")
+                  tempCanvas.width = image.width
+                  tempCanvas.height = image.height
+                  const tempCtx = tempCanvas.getContext("2d")
 
-                  if (image.data.length === image.width * image.height * 4) {
-                    imageData.data.set(image.data)
-                  } else if (image.data.length === image.width * image.height * 3) {
-                    // RGB to RGBA conversion
-                    for (let j = 0; j < image.width * image.height; j++) {
-                      imageData.data[j * 4] = image.data[j * 3]
-                      imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
-                      imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
-                      imageData.data[j * 4 + 3] = 255
+                  if (tempCtx) {
+                    const imageData = tempCtx.createImageData(image.width, image.height)
+
+                    if (image.data.length === image.width * image.height * 4) {
+                      imageData.data.set(image.data)
+                    } else if (image.data.length === image.width * image.height * 3) {
+                      // RGB to RGBA conversion
+                      for (let j = 0; j < image.width * image.height; j++) {
+                        imageData.data[j * 4] = image.data[j * 3]
+                        imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
+                        imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
+                        imageData.data[j * 4 + 3] = 255
+                      }
+                    } else if (image.data.length === image.width * image.height) {
+                      // Grayscale to RGBA
+                      for (let j = 0; j < image.width * image.height; j++) {
+                        const gray = image.data[j]
+                        imageData.data[j * 4] = gray
+                        imageData.data[j * 4 + 1] = gray
+                        imageData.data[j * 4 + 2] = gray
+                        imageData.data[j * 4 + 3] = 255
+                      }
                     }
-                  } else if (image.data.length === image.width * image.height) {
-                    // Grayscale to RGBA
-                    for (let j = 0; j < image.width * image.height; j++) {
-                      const gray = image.data[j]
-                      imageData.data[j * 4] = gray
-                      imageData.data[j * 4 + 1] = gray
-                      imageData.data[j * 4 + 2] = gray
-                      imageData.data[j * 4 + 3] = 255
+
+                    tempCtx.putImageData(imageData, 0, 0)
+                    
+                    if (width !== image.width || height !== image.height) {
+                      imgCtx.drawImage(tempCanvas, 0, 0, width, height)
+                    } else {
+                      imgCtx.drawImage(tempCanvas, 0, 0)
                     }
+
+                    const blob = await new Promise<Blob | null>((resolve) => imgCanvas.toBlob(resolve, "image/png"))
+                    if (blob) {
+                      const url = URL.createObjectURL(blob)
+                      extractedImages.push(url)
+                    }
+                    console.log("Successfully extracted image from data, total now:", extractedImages.length)
                   }
-
-                  imgCtx.putImageData(imageData, 0, 0)
-                  const dataUrl = imgCanvas.toDataURL("image/png")
-                  extractedImages.push(dataUrl)
-                  console.log("Successfully extracted image from data, total now:", extractedImages.length)
                 }
               }
             } catch (err) {
@@ -112,27 +155,25 @@ export function ExtractImages() {
             const imageName = args[0]
             console.log("Found image operator:", imageName)
             imagePromises.push(
-              new Promise<void>((resolve) => {
+              (async () => {
                 // Check both page.objs and page.commonObjs
                 const image = page.objs.get(imageName) || (page as any).commonObjs?.get(imageName)
                 if (image) {
-                  processImage(image)
+                  await processImage(image)
                 } else {
                   console.warn("Image not found in objs or commonObjs:", imageName)
                 }
-                resolve()
-              }),
+              })(),
             )
           } else if (fn === pdfjsLib.OPS.paintInlineImageXObject) {
             const image = args[0]
             console.log("Found paintInlineImageXObject")
             imagePromises.push(
-              new Promise<void>((resolve) => {
+              (async () => {
                 if (image) {
-                  processImage(image)
+                  await processImage(image)
                 }
-                resolve()
-              }),
+              })(),
             )
           }
         }

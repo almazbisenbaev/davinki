@@ -10,16 +10,6 @@ export default function Home() {
     "@type": "SoftwareApplication",
     name: "Da Vinki PDF",
     applicationCategory: "UtilitiesApplication",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "1250",
-    },
     operatingSystem: "Web Browser",
     description: "Free online PDF tools for editing, converting, and managing PDF documents",
     featureList:
