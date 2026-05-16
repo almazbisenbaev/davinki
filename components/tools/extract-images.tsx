@@ -45,66 +45,82 @@ export function ExtractImages() {
           await page.render({
             canvasContext: ctx,
             viewport: viewport,
+            canvas: canvas as any,
           }).promise
         }
 
         const operatorList = await page.getOperatorList()
         const imagePromises: Promise<void>[] = []
 
-        for (let i = 0; i < operatorList.fnArray.length; i++) {
-          if (
-            operatorList.fnArray[i] === pdfjsLib.OPS.paintImageXObject ||
-            operatorList.fnArray[i] === pdfjsLib.OPS.paintInlineImageXObject ||
-            operatorList.fnArray[i] === pdfjsLib.OPS.paintJpegXObject
-          ) {
-            const imageName = operatorList.argsArray[i][0]
+        const processImage = (image: any) => {
+          if (image && image.width && image.height) {
+            try {
+              const imgCanvas = document.createElement("canvas")
+              imgCanvas.width = image.width
+              imgCanvas.height = image.height
+              const imgCtx = imgCanvas.getContext("2d")
 
-            const imagePromise = new Promise<void>((resolve) => {
-              page.objs.ensure(imageName, (image) => {
-                if (image && image.width && image.height) {
-                  try {
-                    const imgCanvas = document.createElement("canvas")
-                    imgCanvas.width = image.width
-                    imgCanvas.height = image.height
-                    const imgCtx = imgCanvas.getContext("2d")
+              if (imgCtx && image.data) {
+                const imageData = imgCtx.createImageData(image.width, image.height)
 
-                    if (imgCtx && image.data) {
-                      const imageData = imgCtx.createImageData(image.width, image.height)
-
-                      if (image.data.length === image.width * image.height * 4) {
-                        imageData.data.set(image.data)
-                      } else if (image.data.length === image.width * image.height * 3) {
-                        // RGB to RGBA conversion
-                        for (let j = 0; j < image.width * image.height; j++) {
-                          imageData.data[j * 4] = image.data[j * 3]
-                          imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
-                          imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
-                          imageData.data[j * 4 + 3] = 255
-                        }
-                      } else if (image.data.length === image.width * image.height) {
-                        // Grayscale to RGBA
-                        for (let j = 0; j < image.width * image.height; j++) {
-                          const gray = image.data[j]
-                          imageData.data[j * 4] = gray
-                          imageData.data[j * 4 + 1] = gray
-                          imageData.data[j * 4 + 2] = gray
-                          imageData.data[j * 4 + 3] = 255
-                        }
-                      }
-
-                      imgCtx.putImageData(imageData, 0, 0)
-                      const dataUrl = imgCanvas.toDataURL("image/png")
-                      extractedImages.push(dataUrl)
-                    }
-                  } catch (err) {
-                    console.error("Error processing image:", err)
+                if (image.data.length === image.width * image.height * 4) {
+                  imageData.data.set(image.data)
+                } else if (image.data.length === image.width * image.height * 3) {
+                  // RGB to RGBA conversion
+                  for (let j = 0; j < image.width * image.height; j++) {
+                    imageData.data[j * 4] = image.data[j * 3]
+                    imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
+                    imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
+                    imageData.data[j * 4 + 3] = 255
+                  }
+                } else if (image.data.length === image.width * image.height) {
+                  // Grayscale to RGBA
+                  for (let j = 0; j < image.width * image.height; j++) {
+                    const gray = image.data[j]
+                    imageData.data[j * 4] = gray
+                    imageData.data[j * 4 + 1] = gray
+                    imageData.data[j * 4 + 2] = gray
+                    imageData.data[j * 4 + 3] = 255
                   }
                 }
-                resolve()
-              })
-            })
 
-            imagePromises.push(imagePromise)
+                imgCtx.putImageData(imageData, 0, 0)
+                const dataUrl = imgCanvas.toDataURL("image/png")
+                extractedImages.push(dataUrl)
+              }
+            } catch (err) {
+              console.error("Error processing image:", err)
+            }
+          }
+        }
+
+        for (let i = 0; i < operatorList.fnArray.length; i++) {
+          const fn = operatorList.fnArray[i]
+          const args = operatorList.argsArray[i]
+
+          if (fn === pdfjsLib.OPS.paintImageXObject) {
+            const imageName = args[0]
+            imagePromises.push(
+              new Promise<void>((resolve) => {
+                // In PDF.js v3+, use get() instead of ensure()
+                // Objects are usually already available after getOperatorList
+                const image = page.objs.get(imageName)
+                if (image) {
+                  processImage(image)
+                }
+                resolve()
+              }),
+            )
+          } else if (fn === pdfjsLib.OPS.paintInlineImageXObject) {
+            const image = args[0]
+            imagePromises.push(
+              new Promise<void>((resolve) => {
+                if (image) {
+                  processImage(image)
+                }
+                resolve()
+              }),
+            )
           }
         }
 
