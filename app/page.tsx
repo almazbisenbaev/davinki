@@ -102,7 +102,6 @@ export default function Home() {
                 name="Extract Images"
                 description="Extract all images from a PDF document"
                 Icon={ImageIcon}
-                badge="Beta"
               />
               <ToolCard
                 href="/extract-text"

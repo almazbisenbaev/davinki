@@ -50,9 +50,11 @@ export function ExtractImages() {
         }
 
         const operatorList = await page.getOperatorList()
+        console.log(`Page ${pageNum} operator list length:`, operatorList.fnArray.length)
         const imagePromises: Promise<void>[] = []
 
         const processImage = (image: any) => {
+          console.log("Processing image:", image?.width, "x", image?.height, "hasData:", !!image?.data, "hasBitmap:", !!image?.bitmap)
           if (image && image.width && image.height) {
             try {
               const imgCanvas = document.createElement("canvas")
@@ -60,33 +62,41 @@ export function ExtractImages() {
               imgCanvas.height = image.height
               const imgCtx = imgCanvas.getContext("2d")
 
-              if (imgCtx && image.data) {
-                const imageData = imgCtx.createImageData(image.width, image.height)
+              if (imgCtx) {
+                if (image.bitmap) {
+                  imgCtx.drawImage(image.bitmap, 0, 0)
+                  const dataUrl = imgCanvas.toDataURL("image/png")
+                  extractedImages.push(dataUrl)
+                  console.log("Successfully extracted image from bitmap, total now:", extractedImages.length)
+                } else if (image.data) {
+                  const imageData = imgCtx.createImageData(image.width, image.height)
 
-                if (image.data.length === image.width * image.height * 4) {
-                  imageData.data.set(image.data)
-                } else if (image.data.length === image.width * image.height * 3) {
-                  // RGB to RGBA conversion
-                  for (let j = 0; j < image.width * image.height; j++) {
-                    imageData.data[j * 4] = image.data[j * 3]
-                    imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
-                    imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
-                    imageData.data[j * 4 + 3] = 255
+                  if (image.data.length === image.width * image.height * 4) {
+                    imageData.data.set(image.data)
+                  } else if (image.data.length === image.width * image.height * 3) {
+                    // RGB to RGBA conversion
+                    for (let j = 0; j < image.width * image.height; j++) {
+                      imageData.data[j * 4] = image.data[j * 3]
+                      imageData.data[j * 4 + 1] = image.data[j * 3 + 1]
+                      imageData.data[j * 4 + 2] = image.data[j * 3 + 2]
+                      imageData.data[j * 4 + 3] = 255
+                    }
+                  } else if (image.data.length === image.width * image.height) {
+                    // Grayscale to RGBA
+                    for (let j = 0; j < image.width * image.height; j++) {
+                      const gray = image.data[j]
+                      imageData.data[j * 4] = gray
+                      imageData.data[j * 4 + 1] = gray
+                      imageData.data[j * 4 + 2] = gray
+                      imageData.data[j * 4 + 3] = 255
+                    }
                   }
-                } else if (image.data.length === image.width * image.height) {
-                  // Grayscale to RGBA
-                  for (let j = 0; j < image.width * image.height; j++) {
-                    const gray = image.data[j]
-                    imageData.data[j * 4] = gray
-                    imageData.data[j * 4 + 1] = gray
-                    imageData.data[j * 4 + 2] = gray
-                    imageData.data[j * 4 + 3] = 255
-                  }
+
+                  imgCtx.putImageData(imageData, 0, 0)
+                  const dataUrl = imgCanvas.toDataURL("image/png")
+                  extractedImages.push(dataUrl)
+                  console.log("Successfully extracted image from data, total now:", extractedImages.length)
                 }
-
-                imgCtx.putImageData(imageData, 0, 0)
-                const dataUrl = imgCanvas.toDataURL("image/png")
-                extractedImages.push(dataUrl)
               }
             } catch (err) {
               console.error("Error processing image:", err)
@@ -98,21 +108,24 @@ export function ExtractImages() {
           const fn = operatorList.fnArray[i]
           const args = operatorList.argsArray[i]
 
-          if (fn === pdfjsLib.OPS.paintImageXObject) {
+          if (fn === pdfjsLib.OPS.paintImageXObject || fn === (pdfjsLib.OPS as any).paintXObject) {
             const imageName = args[0]
+            console.log("Found image operator:", imageName)
             imagePromises.push(
               new Promise<void>((resolve) => {
-                // In PDF.js v3+, use get() instead of ensure()
-                // Objects are usually already available after getOperatorList
-                const image = page.objs.get(imageName)
+                // Check both page.objs and page.commonObjs
+                const image = page.objs.get(imageName) || (page as any).commonObjs?.get(imageName)
                 if (image) {
                   processImage(image)
+                } else {
+                  console.warn("Image not found in objs or commonObjs:", imageName)
                 }
                 resolve()
               }),
             )
           } else if (fn === pdfjsLib.OPS.paintInlineImageXObject) {
             const image = args[0]
+            console.log("Found paintInlineImageXObject")
             imagePromises.push(
               new Promise<void>((resolve) => {
                 if (image) {
@@ -125,6 +138,15 @@ export function ExtractImages() {
         }
 
         await Promise.all(imagePromises)
+        // Update images state after each page to show progress
+        if (extractedImages.length > 0) {
+          setImages([...extractedImages])
+        }
+      }
+
+      if (extractedImages.length === 0) {
+        console.log("No images were found in the PDF")
+        alert("No images were found in this PDF.")
       }
 
       setImages(extractedImages)
