@@ -34,7 +34,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "text-sm",
+                    "text-base font-semibold",
                     pathname === link.href && "bg-primary/10 text-primary"
                   )}
                 >
@@ -62,9 +62,9 @@ export function Header() {
                       <Link
                         href={link.href}
                         className={cn(
-                          "block px-3 py-2 rounded-lg transition-colors text-sm",
+                          "block px-3 py-3 rounded-lg transition-colors text-base",
                           pathname === link.href
-                            ? "bg-primary/10 text-primary font-medium"
+                            ? "bg-primary/10 text-primary font-bold"
                             : "hover:bg-primary/10"
                         )}
                       >
