@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Upload, Download, Loader2, FileText, RotateCw, RotateCcw } from "lucide-react"
 import { PDFPreview } from "@/components/pdf-preview"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 export function RotatePDF() {
   const [file, setFile] = useState<File | null>(null)
@@ -15,6 +17,7 @@ export function RotatePDF() {
   const [pageCount, setPageCount] = useState(0)
   const [rotation, setRotation] = useState(0)
   const [rotatedPdf, setRotatedPdf] = useState<Uint8Array | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -42,20 +45,18 @@ export function RotatePDF() {
       const pdfBytes = await pdfDoc.save()
 
       setRotatedPdf(pdfBytes)
-
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = file.name.replace(".pdf", "_rotated.pdf")
-      a.click()
-      URL.revokeObjectURL(url)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Rotation error:", error)
       alert("Failed to rotate PDF. Please try again.")
     } finally {
       setProcessing(false)
     }
+  }
+
+  const handleDownload = () => {
+    if (!rotatedPdf || !file) return
+    downloadPdfBytes(rotatedPdf, file.name.replace(".pdf", "_rotated.pdf"))
   }
 
   return (
@@ -149,6 +150,14 @@ export function RotatePDF() {
           </div>
         )}
       </div>
+
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={file ? file.name.replace(".pdf", "_rotated.pdf") : "rotated.pdf"}
+        description="Your rotated PDF is ready to download"
+      />
     </div>
   )
 }

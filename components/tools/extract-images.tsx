@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Download, Loader2, ImageIcon } from "lucide-react"
 import { pdfjsLib } from "@/lib/pdf-worker"
+import { DownloadModal } from "@/components/download-modal"
 
 export function ExtractImages() {
   const [file, setFile] = useState<File | null>(null)
   const [processing, setProcessing] = useState(false)
   const [images, setImages] = useState<string[]>([])
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   // Clean up blob URLs to prevent memory leaks
   useEffect(() => {
@@ -191,6 +193,9 @@ export function ExtractImages() {
       }
 
       setImages(extractedImages)
+      if (extractedImages.length > 0) {
+        setShowDownloadModal(true)
+      }
     } catch (error) {
       console.error("Error extracting images:", error)
       alert("Failed to extract images. Please try again.")
@@ -284,6 +289,14 @@ export function ExtractImages() {
             </CardContent>
           </Card>
         )}
+
+        <DownloadModal
+          open={showDownloadModal}
+          onOpenChange={setShowDownloadModal}
+          onDownload={downloadAll}
+          fileName={`${images.length} extracted images`}
+          description={`Successfully extracted ${images.length} images from your PDF`}
+        />
       </div>
     )
 }

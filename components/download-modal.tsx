@@ -35,34 +35,48 @@ export function DownloadModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-strong border-2 max-w-md">
-        <DialogHeader className="space-y-4">
-          <div className="mx-auto p-4 bg-primary/10 rounded-2xl animate-in zoom-in-50 duration-300">
-            <FileCheck className="h-12 w-12 text-primary" />
-          </div>
-          <DialogTitle className="text-2xl text-center">Ready to Download!</DialogTitle>
-          <DialogDescription className="text-center text-base">{description}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-4">
-          <div className="p-4 bg-muted/50 rounded-xl border">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 space-y-1">
-                <p className="font-medium text-sm">{fileName}</p>
-                {fileSize && <p className="text-xs text-muted-foreground">File size: {fileSize}</p>}
+      <DialogContent className="bg-white border-none max-w-md shadow-2xl rounded-3xl p-0 overflow-hidden">
+        <div className="p-8">
+          <DialogHeader className="space-y-4">
+            <div className="mx-auto w-20 h-20 bg-green-50 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-500">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                <FileCheck className="h-8 w-8 text-green-600" />
               </div>
             </div>
+            <DialogTitle className="text-2xl font-bold text-center text-slate-900">Ready to Download!</DialogTitle>
+            <DialogDescription className="text-center text-slate-500 text-base">{description}</DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-8 space-y-6">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-slate-900 truncate">{fileName}</p>
+                {fileSize && <p className="text-xs text-slate-500 font-medium">File size: {fileSize}</p>}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={handleDownload} 
+                className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" 
+                size="lg"
+              >
+                <Download className="mr-2 h-5 w-5" />
+                Download Now
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                onClick={() => onOpenChange(false)} 
+                className="w-full h-12 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl font-medium"
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-
-          <Button onClick={handleDownload} className="w-full h-12 text-base" size="lg">
-            <Download className="mr-2 h-5 w-5" />
-            Download PDF
-          </Button>
-
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
-            Cancel
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

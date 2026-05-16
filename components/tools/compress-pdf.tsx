@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import { Upload, Download, Loader2, FileText } from "lucide-react"
 import { DownloadModal } from "@/components/download-modal"
 import { PDFPreview } from "@/components/pdf-preview"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 export function CompressPDF() {
   const [file, setFile] = useState<File | null>(null)
@@ -56,13 +57,7 @@ export function CompressPDF() {
 
   const handleDownload = () => {
     if (!pdfToDownload || !file) return
-    const blob = new Blob([pdfToDownload], { type: "application/pdf" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = file.name.replace(".pdf", "_compressed.pdf")
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadPdfBytes(pdfToDownload, file.name.replace(".pdf", "_compressed.pdf"))
   }
 
   const formatSize = (bytes: number) => {

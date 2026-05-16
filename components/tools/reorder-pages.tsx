@@ -9,6 +9,8 @@ import { PDFDocument } from "pdf-lib"
 import { pdfjsLib } from "@/lib/pdf-worker"
 import { Upload, Download, GripVertical, Loader2 } from "lucide-react"
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 interface PageInfo {
   id: string
@@ -21,6 +23,8 @@ export function ReorderPagesTool() {
   const [pages, setPages] = useState<PageInfo[]>([])
   const [processing, setProcessing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [processedPdf, setProcessedPdf] = useState<Uint8Array | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -45,7 +49,7 @@ export function ReorderPagesTool() {
         canvas.width = viewport.width
         canvas.height = viewport.height
 
-        await page.render({ canvasContext: context, viewport }).promise
+        await page.render({ canvasContext: context, viewport, canvas }).promise
         const thumbnail = canvas.toDataURL()
 
         pageInfos.push({
@@ -90,18 +94,19 @@ export function ReorderPagesTool() {
       }
 
       const pdfBytes = await newPdfDoc.save()
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `reordered_${file.name}`
-      a.click()
+      setProcessedPdf(pdfBytes)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Error reordering pages:", error)
       alert("Failed to reorder pages. Please try again.")
     } finally {
       setProcessing(false)
     }
+  }
+
+  const handleDownload = () => {
+    if (!processedPdf || !file) return
+    downloadPdfBytes(processedPdf, `reordered_${file.name}`)
   }
 
   return (
@@ -218,6 +223,14 @@ export function ReorderPagesTool() {
           )}
         </CardContent>
       </Card>
+
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={file ? `reordered_${file.name}` : "reordered.pdf"}
+        description="Your PDF pages have been reordered and are ready to download"
+      />
     </div>
   )
 }

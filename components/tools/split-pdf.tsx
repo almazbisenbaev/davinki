@@ -12,6 +12,8 @@ import { Upload, Download, Loader2, FileText, Check } from "lucide-react"
 import { PDFDocument } from "pdf-lib"
 import { pdfjsLib } from "@/lib/pdf-worker"
 import { PDFPreview } from "@/components/pdf-preview"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 type SplitMode = "all" | "range" | "specific"
 
@@ -26,6 +28,8 @@ export function SplitPDF() {
   const [isDragging, setIsDragging] = useState(false)
   const [thumbnails, setThumbnails] = useState<string[]>([])
   const [previewPdfBytes, setPreviewPdfBytes] = useState<Uint8Array | null>(null)
+  const [splitFiles, setSplitFiles] = useState<{ bytes: Uint8Array; name: string }[]>([])
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -54,7 +58,7 @@ export function SplitPDF() {
       const context = canvas.getContext("2d")!
       canvas.width = viewport.width
       canvas.height = viewport.height
-      await page.render({ canvasContext: context, viewport }).promise
+      await page.render({ canvasContext: context, viewport, canvas }).promise
       thumbs.push(canvas.toDataURL())
     }
     setThumbnails(thumbs)
@@ -100,6 +104,8 @@ export function SplitPDF() {
         pagesToExtract = pages.filter((p) => p >= 0 && p < totalPages)
       }
 
+      const results: { bytes: Uint8Array; name: string }[] = []
+
       // Create separate PDFs for each page
       for (let i = 0; i < pagesToExtract.length; i++) {
         const newPdf = await PDFDocument.create()
@@ -113,14 +119,14 @@ export function SplitPDF() {
           setPreviewPdfBytes(pdfBytes)
         }
 
-        const blob = new Blob([pdfBytes], { type: "application/pdf" })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `${file.name.replace(".pdf", "")}_page_${pagesToExtract[i] + 1}.pdf`
-        link.click()
-        URL.revokeObjectURL(url)
+        results.push({
+          bytes: pdfBytes,
+          name: `${file.name.replace(".pdf", "")}_page_${pagesToExtract[i] + 1}.pdf`,
+        })
       }
+
+      setSplitFiles(results)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Error splitting PDF:", error)
       alert("Failed to split PDF. Please try again.")
@@ -129,9 +135,15 @@ export function SplitPDF() {
     }
   }
 
+  const handleDownload = () => {
+    splitFiles.forEach((file) => {
+      downloadPdfBytes(file.bytes, file.name)
+    })
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-        <Card className="glass-strong border-2 overflow-hidden">
+      <Card className="glass-strong border-2 overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -288,7 +300,14 @@ export function SplitPDF() {
             description="Preview of the first extracted page"
           />
         )}
-      </div>
 
-    )
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={splitFiles.length > 1 ? `${splitFiles.length} PDF files` : splitFiles[0]?.name || "split.pdf"}
+        description={splitFiles.length > 1 ? "Your split PDF files are ready" : "Your split PDF is ready to download"}
+      />
+    </div>
+  )
 }

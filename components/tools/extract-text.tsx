@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Download, Copy, Check, Loader2, FileText } from "lucide-react"
 import { pdfjsLib } from "@/lib/pdf-worker"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadText } from "@/lib/utils/download"
 
 export function ExtractText() {
   const [file, setFile] = useState<File | null>(null)
   const [processing, setProcessing] = useState(false)
   const [extractedText, setExtractedText] = useState("")
   const [copied, setCopied] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -61,13 +64,8 @@ export function ExtractText() {
   }
 
   const handleDownload = () => {
-    const blob = new Blob([extractedText], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `${file?.name.replace(".pdf", "")}_text.txt`
-    link.click()
-    URL.revokeObjectURL(url)
+    if (!file) return
+    downloadText(extractedText, `${file.name.replace(".pdf", "")}_text.txt`)
   }
 
   return (
@@ -148,7 +146,7 @@ export function ExtractText() {
                       </>
                     )}
                   </Button>
-                  <Button onClick={handleDownload} size="sm" className="gap-2">
+                  <Button onClick={() => setShowDownloadModal(true)} size="sm" className="gap-2">
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
@@ -167,6 +165,14 @@ export function ExtractText() {
             </CardContent>
           </Card>
         )}
+
+        <DownloadModal
+          open={showDownloadModal}
+          onOpenChange={setShowDownloadModal}
+          onDownload={handleDownload}
+          fileName={file ? `${file.name.replace(".pdf", "")}_text.txt` : "extracted_text.txt"}
+          description="Your extracted text is ready to download"
+        />
       </div>
     )
 }

@@ -9,6 +9,8 @@ import { PDFDocument } from "pdf-lib"
 import { pdfjsLib } from "@/lib/pdf-worker"
 import { Upload, Trash2, Loader2, X } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 interface PageInfo {
   pageNumber: number
@@ -21,6 +23,8 @@ export function RemovePagesTool() {
   const [pages, setPages] = useState<PageInfo[]>([])
   const [processing, setProcessing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [processedPdf, setProcessedPdf] = useState<Uint8Array | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -45,7 +49,7 @@ export function RemovePagesTool() {
         canvas.width = viewport.width
         canvas.height = viewport.height
 
-        await page.render({ canvasContext: context, viewport }).promise
+        await page.render({ canvasContext: context, viewport, canvas }).promise
         const thumbnail = canvas.toDataURL()
 
         pageInfos.push({
@@ -94,18 +98,19 @@ export function RemovePagesTool() {
       }
 
       const pdfBytes = await pdfDoc.save()
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `removed_pages_${file.name}`
-      a.click()
+      setProcessedPdf(pdfBytes)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Error removing pages:", error)
       alert("Failed to remove pages. Please try again.")
     } finally {
       setProcessing(false)
     }
+  }
+
+  const handleDownload = () => {
+    if (!processedPdf || !file) return
+    downloadPdfBytes(processedPdf, `removed_pages_${file.name}`)
   }
 
   const selectedCount = pages.filter((p) => p.selected).length
@@ -216,6 +221,14 @@ export function RemovePagesTool() {
           )}
         </CardContent>
       </Card>
+
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={file ? `removed_pages_${file.name}` : "removed_pages.pdf"}
+        description={`Your PDF with ${selectedCount} page${selectedCount !== 1 ? "s" : ""} removed is ready to download`}
+      />
     </div>
   )
 }

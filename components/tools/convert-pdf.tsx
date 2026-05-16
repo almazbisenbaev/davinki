@@ -10,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
 import { Upload, Download, Loader2, FileType } from "lucide-react"
 import { pdfjsLib } from "@/lib/pdf-worker"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadBlob } from "@/lib/utils/download"
 
 type ImageFormat = "png" | "jpg"
 
@@ -20,6 +22,8 @@ export function ConvertPDF() {
   const [quality, setQuality] = useState([90])
   const [scale, setScale] = useState([2])
   const [totalPages, setTotalPages] = useState(0)
+  const [convertedFiles, setConvertedFiles] = useState<{ blob: Blob; name: string }[]>([])
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -43,6 +47,7 @@ export function ConvertPDF() {
       // Max canvas dimension to prevent empty images on large PDFs
       // Most browsers have a limit around 16k, but 8k is safer and more performant
       const MAX_CANVAS_DIMENSION = 8192
+      const results: { blob: Blob; name: string }[] = []
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum)
@@ -75,16 +80,16 @@ export function ConvertPDF() {
           })
 
           if (blob) {
-            const url = URL.createObjectURL(blob)
-            const link = document.createElement("a")
-            link.href = url
-            link.download = `${file.name.replace(".pdf", "")}_page_${pageNum}.${format}`
-            link.click()
-            // Clean up the URL after a small delay to ensure download starts
-            setTimeout(() => URL.revokeObjectURL(url), 100)
+            results.push({
+              blob,
+              name: `${file.name.replace(".pdf", "")}_page_${pageNum}.${format}`,
+            })
           }
         }
       }
+
+      setConvertedFiles(results)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Error converting PDF:", error)
       alert("Failed to convert PDF. Please try again.")
@@ -92,6 +97,12 @@ export function ConvertPDF() {
       setProcessing(false)
     }
   }
+
+  const handleDownload = () => {
+     convertedFiles.forEach((file) => {
+       downloadBlob(file.blob, file.name)
+     })
+   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -162,6 +173,14 @@ export function ConvertPDF() {
             )}
           </CardContent>
         </Card>
+
+        <DownloadModal
+          open={showDownloadModal}
+          onOpenChange={setShowDownloadModal}
+          onDownload={handleDownload}
+          fileName={convertedFiles.length > 1 ? `${convertedFiles.length} Images` : convertedFiles[0]?.name || "images"}
+          description={convertedFiles.length > 1 ? "Your images are ready" : "Your image is ready to download"}
+        />
       </div>
     )
 }

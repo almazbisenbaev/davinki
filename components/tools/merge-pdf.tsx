@@ -11,6 +11,7 @@ import { PDFPreview } from "@/components/pdf-preview"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 interface PDFFile {
   id: string
@@ -24,18 +25,8 @@ export function MergePDF() {
   const [isDragging, setIsDragging] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [showDownloadModal, setShowDownloadModal] = useState(false)
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null)
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null)
   const [equalizeWidths, setEqualizeWidths] = useState(false)
-
-  // Clean up blob URLs on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (pdfBlobUrl) {
-        URL.revokeObjectURL(pdfBlobUrl)
-      }
-    }
-  }, [pdfBlobUrl])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
@@ -60,7 +51,6 @@ export function MergePDF() {
   const removeFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id))
     setPdfBytes(null)
-    setPdfBlobUrl(null)
   }
 
   const handleDragStart = (index: number) => {
@@ -108,10 +98,6 @@ export function MergePDF() {
     if (files.length < 2) return
 
     setProcessing(true)
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl)
-    }
-    setPdfBlobUrl(null)
     setPdfBytes(null)
 
     try {
@@ -151,11 +137,7 @@ export function MergePDF() {
 
       const bytes = await mergedPdf.save()
 
-      const blob = new Blob([bytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-
       setPdfBytes(bytes)
-      setPdfBlobUrl(url)
       setShowDownloadModal(true)
     } catch (error) {
       console.error("Error merging PDFs:", error)
@@ -166,17 +148,11 @@ export function MergePDF() {
   }
 
   const handleDownload = () => {
-    if (!pdfBlobUrl) {
+    if (!pdfBytes) {
       alert("No PDF ready for download")
       return
     }
-
-    const link = document.createElement("a")
-    link.href = pdfBlobUrl
-    link.download = "merged.pdf"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    downloadPdfBytes(pdfBytes, "merged.pdf")
   }
 
   return (

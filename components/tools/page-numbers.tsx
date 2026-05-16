@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PDFDocument, rgb } from "pdf-lib"
 import { Upload, Download, Hash, Loader2 } from "lucide-react"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 type Position = "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right"
 type Format = "1" | "Page 1" | "1/10" | "Page 1 of 10"
@@ -22,6 +24,8 @@ export function PageNumbersTool() {
   const [fontSize, setFontSize] = useState(12)
   const [processing, setProcessing] = useState(false)
   const [preview, setPreview] = useState<string>("")
+  const [processedPdf, setProcessedPdf] = useState<Uint8Array | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -43,6 +47,11 @@ export function PageNumbersTool() {
       case "Page 1 of 10":
         return `Page ${current} of ${total}`
     }
+  }
+
+  const handleDownload = () => {
+    if (!processedPdf || !file) return
+    downloadPdfBytes(processedPdf, `numbered_${file.name}`)
   }
 
   const handleAddPageNumbers = async () => {
@@ -83,12 +92,8 @@ export function PageNumbersTool() {
       })
 
       const pdfBytes = await pdfDoc.save()
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `numbered_${file.name}`
-      a.click()
+      setProcessedPdf(pdfBytes)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Error adding page numbers:", error)
       alert("Failed to add page numbers. Please try again.")
@@ -205,6 +210,14 @@ export function PageNumbersTool() {
           </div>
         </CardContent>
       </Card>
+
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={file ? `numbered_${file.name}` : "numbered.pdf"}
+        description="Your PDF with page numbers is ready to download"
+      />
     </div>
   )
 }

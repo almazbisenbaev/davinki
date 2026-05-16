@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Download, Loader2, FileText, Type, ImageIcon } from "lucide-react"
+import { DownloadModal } from "@/components/download-modal"
+import { downloadPdfBytes } from "@/lib/utils/download"
 
 type WatermarkMode = "text" | "image"
 
@@ -19,6 +21,8 @@ export function WatermarkPDF() {
   const [processing, setProcessing] = useState(false)
   const [pageCount, setPageCount] = useState(0)
   const [mode, setMode] = useState<WatermarkMode>("text")
+  const [processedPdf, setProcessedPdf] = useState<Uint8Array | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
   // Text watermark state
   const [watermarkText, setWatermarkText] = useState("CONFIDENTIAL")
@@ -107,19 +111,19 @@ export function WatermarkPDF() {
       }
 
       const pdfBytes = await pdfDoc.save()
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = file.name.replace(".pdf", "_watermarked.pdf")
-      a.click()
-      URL.revokeObjectURL(url)
+      setProcessedPdf(pdfBytes)
+      setShowDownloadModal(true)
     } catch (error) {
       console.error("Watermark error:", error)
       alert("Failed to add watermark. Please try again.")
     } finally {
       setProcessing(false)
     }
+  }
+
+  const handleDownload = () => {
+    if (!processedPdf || !file) return
+    downloadPdfBytes(processedPdf, file.name.replace(".pdf", "_watermarked.pdf"))
   }
 
   const canApply = mode === "text" ? !!watermarkText : !!watermarkImage
@@ -319,6 +323,14 @@ export function WatermarkPDF() {
           </div>
         )}
       </Card>
+
+      <DownloadModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onDownload={handleDownload}
+        fileName={file ? file.name.replace(".pdf", "_watermarked.pdf") : "watermarked.pdf"}
+        description="Your watermarked PDF is ready to download"
+      />
     </div>
   )
 }
