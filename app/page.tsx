@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, FileText, Scissors, Combine, Minimize2, RotateCw, ImageIcon, Droplet, Lock, FileType, Trash2, GripVertical, Hash, Crop, Layers, EyeOff, ScanSearch, GitCompareArrows, Palette, LockOpen } from "lucide-react"
+import { ArrowRight, FileText, Scissors, Combine, Minimize2, RotateCw, ImageIcon, Droplet, Lock, FileType, Trash2, GripVertical, Hash, Crop, Layers, EyeOff, ScanSearch, GitCompareArrows, LockOpen } from "lucide-react"
 import { JsonLd } from "@/components/seo/json-ld"
 
 export default function Home() {
@@ -182,11 +182,6 @@ export default function Home() {
                   name="Compare PDFs"
                   description="Visual side-by-side diff to spot changes between two documents"
                   Icon={GitCompareArrows}
-                />
-                <ComingSoonToolCard
-                  name="Grayscale PDF"
-                  description="Convert color pages to black and white for printing"
-                  Icon={Palette}
                 />
                 <ComingSoonToolCard
                   name="Unlock PDF"
